@@ -3,14 +3,43 @@
      SPDX-FileCopyrightText: The LineageOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
+<!--
+     The display is a sheet with four positions:
+       state_basic             (rest) the numeric pad's buttons are circles and the display
+                               sits directly on top of them; the advanced pad is folded away,
+       state_advanced          the display stays put; the advanced pad unfolds over the top of
+                               the numeric pad, whose buttons squash into stadiums to make
+                               room, so that all eight rows of buttons are the same height,
+       state_history           (pulled down from state_basic) the history covers the pads,
+       state_history_advanced  the same, pulled down from state_advanced.
+     The layout file describes state_basic; the other states derive from it.
+-->
 <MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:motion="http://schemas.android.com/apk/res-auto">
 
+    <!-- Rest <-> advanced: started by the toggle in the toolbar, never by touch. Only sizes
+         change, so layout requests from the buttons re-fitting their text are ignored until
+         the transition ends. -->
     <Transition
-        motion:constraintSetEnd="@+id/end_state"
-        motion:constraintSetStart="@+id/start_state"
+        android:id="@+id/transition_basic_advanced"
+        motion:constraintSetEnd="@+id/state_advanced"
+        motion:constraintSetStart="@+id/state_basic"
+        motion:duration="@integer/advanced_pad_duration"
+        motion:layoutDuringTransition="ignoreRequest"
+        motion:motionInterpolator="@interpolator/standard" />
+
+    <!-- Pull the display down over the pads to open the history. Each of the two pad layouts
+         has its own history state, so the pads keep their size while they slide away and the
+         sheet returns to where it came from. The history list is reloaded as the pull starts;
+         the per-frame layout of its growing frame picks that up, so no layout request needs to
+         re-solve the scene. -->
+    <Transition
+        android:id="@+id/transition_basic_history"
+        motion:constraintSetEnd="@+id/state_history"
+        motion:constraintSetStart="@id/state_basic"
         motion:duration="1000"
-        motion:layoutDuringTransition="honorRequest">
+        motion:layoutDuringTransition="ignoreRequest"
+        motion:motionInterpolator="@interpolator/standard">
         <OnSwipe
             motion:dragDirection="dragDown"
             motion:limitBoundsTo="@id/display"
@@ -18,40 +47,160 @@
             motion:touchAnchorSide="bottom" />
     </Transition>
 
-    <ConstraintSet android:id="@+id/start_state" />
+    <Transition
+        android:id="@+id/transition_advanced_history"
+        motion:constraintSetEnd="@+id/state_history_advanced"
+        motion:constraintSetStart="@id/state_advanced"
+        motion:duration="1000"
+        motion:layoutDuringTransition="ignoreRequest"
+        motion:motionInterpolator="@interpolator/standard">
+        <OnSwipe
+            motion:dragDirection="dragDown"
+            motion:limitBoundsTo="@id/display"
+            motion:touchAnchorId="@id/display"
+            motion:touchAnchorSide="bottom" />
+    </Transition>
 
-    <ConstraintSet android:id="@+id/end_state">
-        <Constraint
-            android:id="@id/history_frame"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            motion:layout_constraintBottom_toTopOf="@id/display"
-            motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintTop_toTopOf="parent" />
-        <Constraint
-            android:id="@+id/display"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            motion:layout_constraintBottom_toTopOf="@id/advanced_pad"
-            motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintHeight_percent="@dimen/layout_display_ratio"
-            motion:layout_constraintStart_toStartOf="parent" />
+    <ConstraintSet android:id="@+id/state_basic" />
+
+    <ConstraintSet
+        android:id="@id/state_advanced"
+        motion:deriveConstraintsFrom="@id/state_basic">
+        <!-- The pads share the 4:5 area of the rest position 3:5, i.e. 15/32 and 25/32 of
+             their width, so the display does not move and the rows stay equal. -->
         <Constraint
             android:id="@id/advanced_pad"
             android:layout_width="0dp"
             android:layout_height="0dp"
             motion:layout_constraintBottom_toTopOf="@id/input_pad"
+            motion:layout_constraintDimensionRatio="H,32:15"
             motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintHeight_percent="@dimen/layout_advanced_pad_ratio"
-            motion:layout_constraintStart_toStartOf="parent" />
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
         <Constraint
             android:id="@id/input_pad"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            motion:layout_constraintBottom_toBottomOf="@id/animation_helper"
+            motion:layout_constraintBottom_toTopOf="@id/navigation_bar_guideline"
+            motion:layout_constraintDimensionRatio="H,32:25"
             motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintHeight_percent="@dimen/layout_input_pad_ratio"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
+    </ConstraintSet>
+
+    <ConstraintSet
+        android:id="@id/state_history"
+        motion:deriveConstraintsFrom="@id/state_basic">
+        <Constraint
+            android:id="@id/history_frame"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintBottom_toTopOf="@id/status_bar_scrim"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toTopOf="parent" />
+        <!-- The display sits above the navigation bar, its status bar extension shrunk to
+             nothing and its navigation bar extension filling everything below it. -->
+        <Constraint
+            android:id="@id/display"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintBottom_toTopOf="@id/navigation_bar_guideline"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintHeight_percent="@dimen/layout_display_ratio"
             motion:layout_constraintStart_toStartOf="parent" />
+        <Constraint
+            android:id="@id/status_bar_scrim"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintBottom_toTopOf="@id/display"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toTopOf="@id/display" />
+        <Constraint
+            android:id="@id/navigation_bar_scrim"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toTopOf="@id/display" />
+        <!-- The pads keep their size and slide off the bottom of the screen. -->
+        <Constraint
+            android:id="@id/advanced_pad"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintHeight_percent="0"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toBottomOf="parent"
+            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
+        <Constraint
+            android:id="@id/input_pad"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintDimensionRatio="H,4:5"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toBottomOf="@id/advanced_pad"
+            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
+    </ConstraintSet>
+
+    <ConstraintSet
+        android:id="@id/state_history_advanced"
+        motion:deriveConstraintsFrom="@id/state_advanced">
+        <Constraint
+            android:id="@id/history_frame"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintBottom_toTopOf="@id/status_bar_scrim"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toTopOf="parent" />
+        <!-- The display sits above the navigation bar, its status bar extension shrunk to
+             nothing and its navigation bar extension filling everything below it. -->
+        <Constraint
+            android:id="@id/display"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintBottom_toTopOf="@id/navigation_bar_guideline"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintHeight_percent="@dimen/layout_display_ratio"
+            motion:layout_constraintStart_toStartOf="parent" />
+        <Constraint
+            android:id="@id/status_bar_scrim"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintBottom_toTopOf="@id/display"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toTopOf="@id/display" />
+        <Constraint
+            android:id="@id/navigation_bar_scrim"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toTopOf="@id/display" />
+        <!-- The pads keep their size and slide off the bottom of the screen. -->
+        <Constraint
+            android:id="@id/advanced_pad"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintDimensionRatio="H,32:15"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toBottomOf="parent"
+            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
+        <Constraint
+            android:id="@id/input_pad"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            motion:layout_constraintDimensionRatio="H,32:25"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toBottomOf="@id/advanced_pad"
+            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
     </ConstraintSet>
 </MotionScene>

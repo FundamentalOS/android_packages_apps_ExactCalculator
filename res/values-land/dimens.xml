@@ -21,12 +21,9 @@
     <dimen name="result_textsize">42dip</dimen>
 
     <!-- Pads -->
-    <dimen name="pads_horizontal_edge_padding">8dp</dimen>
-    <dimen name="pads_vertical_edge_padding">8dp</dimen>
-    <dimen name="pads_intra_padding">4dp</dimen>
+    <dimen name="pads_horizontal_edge_padding">2dp</dimen>
+    <dimen name="pads_vertical_edge_padding">2dp</dimen>
 
     <!-- Buttons -->
-    <dimen name="button_horizontal_margin">4dp</dimen>
-    <dimen name="button_small_horizontal_margin">0dp</dimen>
-    <dimen name="button_iconsize">22dp</dimen>
+    <dimen name="button_horizontal_margin">2dp</dimen>
 </resources>

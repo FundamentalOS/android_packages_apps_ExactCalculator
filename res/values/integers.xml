@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Milliseconds the advanced pad takes to unfold or fold away; the toggle's icon morphs
+         over the same time. -->
+    <integer name="advanced_pad_duration">300</integer>
+    <!-- Milliseconds the toolbar toggles take to fade their icon colour and background disc. -->
+    <integer name="toolbar_toggle_duration">200</integer>
+    <!-- Milliseconds the overflow menu takes to grow out of, and shrink back into, its button. -->
+    <integer name="overflow_menu_enter_duration">250</integer>
+    <integer name="overflow_menu_exit_duration">150</integer>
+</resources>

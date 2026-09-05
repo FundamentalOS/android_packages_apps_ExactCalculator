@@ -10,5 +10,6 @@
     android:layout_height="wrap_content"
     android:padding="20dip"
     android:ellipsize="none"
+    android:fontFamily="@font/google_sans_flex"
     android:textAppearance="?android:attr/textAppearanceMedium"
     android:textIsSelectable="true" />

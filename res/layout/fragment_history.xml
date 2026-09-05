@@ -11,13 +11,14 @@
     android:clipChildren="true"
     android:orientation="vertical">
 
+    <!-- Just the title, aligned with the calculator toolbar's history button: no navigation
+         icon, and the actions live in the display's overflow menu. The height is fixed (plus
+         the status bar inset, added at runtime) so that the title stays put while the panel
+         is being pulled shorter than the toolbar. -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/history_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
-        android:navigationContentDescription="@string/desc_navigate_up"
-        app:navigationIcon="?attr/homeAsUpIndicator"
+        android:layout_height="?attr/actionBarSize"
         app:title="@string/title_history" />
 
     <androidx.recyclerview.widget.RecyclerView

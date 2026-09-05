@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <attr name="columnCount" format="integer" />
+    <attr name="rowCount" format="integer" />
+
+    <!-- A pad of keys drawn as one view; see Keypad. -->
+    <declare-styleable name="Keypad">
+        <!-- The xml resource describing the keys: a keypad element, with columnCount and
+             rowCount, holding key elements. -->
+        <attr name="keys" format="reference" />
+        <!-- The gap between a key and the edges of its cell. -->
+        <attr name="keyMargin" format="dimension" />
+    </declare-styleable>
+
+    <!-- The keypad element of a keys resource. -->
+    <declare-styleable name="KeypadGrid">
+        <attr name="columnCount" />
+        <attr name="rowCount" />
+    </declare-styleable>
+
+    <!-- A key element of a keys resource: its cell, label or icon, description and theme. -->
+    <declare-styleable name="Key">
+        <attr name="android:id" />
+        <attr name="android:text" />
+        <attr name="android:contentDescription" />
+        <attr name="android:src" />
+        <attr name="android:theme" />
+        <attr name="android:textAllCaps" />
+        <attr name="android:longClickable" />
+        <attr name="android:visibility" />
+        <attr name="row" format="integer" />
+        <attr name="column" format="integer" />
+    </declare-styleable>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+     Material's text appearances name their typefaces through these four strings. Pointing
+     them at the app's font resources puts Google Sans Flex on every Material widget (button
+     labels, toolbar titles, dialogs, menus) at the weight each text style asks for, without
+     restating the whole type scale. The app's own text styles reference the fonts directly.
+     Lint objects to a string aliasing a font, but the reference is followed like any other
+     when a text appearance is resolved, and TextView loads the font it ends at.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="PrivateResource,ReferenceType">
+    <string name="m3_ref_typeface_brand_regular" translatable="false">@font/google_sans_flex</string>
+    <string name="m3_ref_typeface_brand_medium" translatable="false">@font/google_sans_flex_medium</string>
+    <string name="m3_ref_typeface_plain_regular" translatable="false">@font/google_sans_flex</string>
+    <string name="m3_ref_typeface_plain_medium" translatable="false">@font/google_sans_flex_medium</string>
+</resources>

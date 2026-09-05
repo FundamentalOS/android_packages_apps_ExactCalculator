@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- The numeric pad, five keys wide; see Keypad. -->
+<keypad xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:columnCount="5"
+    app:rowCount="4">
+
+    <key
+        android:id="@id/digit_7"
+        android:text="@string/digit_7"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="0"
+        app:row="0" />
+
+    <key
+        android:id="@id/digit_8"
+        android:text="@string/digit_8"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="1"
+        app:row="0" />
+
+    <key
+        android:id="@id/digit_9"
+        android:text="@string/digit_9"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="2"
+        app:row="0" />
+
+    <key
+        android:id="@id/op_mul"
+        android:contentDescription="@string/desc_op_mul"
+        android:text="@string/op_mul"
+        android:theme="@style/Theme.Button.Operator"
+        app:column="3"
+        app:row="0" />
+
+    <key
+        android:id="@id/op_div"
+        android:contentDescription="@string/desc_op_div"
+        android:text="@string/op_div"
+        android:theme="@style/Theme.Button.Operator"
+        app:column="4"
+        app:row="0" />
+
+    <key
+        android:id="@id/digit_4"
+        android:text="@string/digit_4"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="0"
+        app:row="1" />
+
+    <key
+        android:id="@id/digit_5"
+        android:text="@string/digit_5"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="1"
+        app:row="1" />
+
+    <key
+        android:id="@id/digit_6"
+        android:text="@string/digit_6"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="2"
+        app:row="1" />
+
+    <key
+        android:id="@id/op_sub"
+        android:contentDescription="@string/desc_op_sub"
+        android:text="@string/op_sub"
+        android:theme="@style/Theme.Button.Operator"
+        app:column="3"
+        app:row="1" />
+
+    <key
+        android:id="@id/op_pct"
+        android:contentDescription="@string/desc_op_pct"
+        android:text="@string/op_pct"
+        android:theme="@style/Theme.Button.Operator"
+        app:column="4"
+        app:row="1" />
+
+    <key
+        android:id="@id/digit_1"
+        android:text="@string/digit_1"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="0"
+        app:row="2" />
+
+    <key
+        android:id="@id/digit_2"
+        android:text="@string/digit_2"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="1"
+        app:row="2" />
+
+    <key
+        android:id="@id/digit_3"
+        android:text="@string/digit_3"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="2"
+        app:row="2" />
+
+    <key
+        android:id="@id/op_add"
+        android:contentDescription="@string/desc_op_add"
+        android:text="@string/op_add"
+        android:theme="@style/Theme.Button.Operator"
+        app:column="3"
+        app:row="2" />
+
+    <key
+        android:id="@id/paren"
+        android:contentDescription="@string/desc_paren"
+        android:text="@string/paren"
+        android:theme="@style/Theme.Button.Operator"
+        app:column="4"
+        app:row="2" />
+
+    <key
+        android:id="@id/digit_0"
+        android:text="@string/digit_0"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="0"
+        app:row="3" />
+
+    <key
+        android:id="@id/dec_point"
+        android:contentDescription="@string/desc_dec_point"
+        android:text="@string/dec_point_label"
+        android:theme="@style/Theme.Button.Numeric"
+        app:column="1"
+        app:row="3" />
+
+    <key
+        android:id="@id/del"
+        android:contentDescription="@string/desc_del"
+        android:longClickable="true"
+        android:src="@drawable/ic_del"
+        android:theme="@style/Theme.Button.Delete"
+        app:column="2"
+        app:row="3" />
+
+    <key
+        android:id="@id/eq"
+        android:contentDescription="@string/desc_eq"
+        android:text="@string/eq"
+        android:theme="@style/Theme.Button.Equals"
+        app:column="3"
+        app:row="3" />
+
+    <key
+        android:id="@id/clr"
+        android:contentDescription="@string/desc_clr"
+        android:text="@string/clr"
+        android:theme="@style/Theme.Button.AllClear"
+        app:column="4"
+        app:row="3" />
+</keypad>

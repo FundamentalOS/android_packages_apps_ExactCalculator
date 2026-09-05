@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- The advanced pad, three keys wide. The inverse functions share the cells of the plain ones and
+     are swapped in by INV; see Calculator.onInverseToggled(). -->
+<keypad xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:columnCount="3"
+    app:rowCount="4">
+
+    <key
+        android:id="@id/toggle_mode"
+        android:contentDescription="@string/desc_switch_deg"
+        android:text="@string/mode_deg"
+        android:textAllCaps="true"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="0"
+        app:row="0" />
+
+    <key
+        android:id="@id/op_sqrt"
+        android:contentDescription="@string/desc_op_sqrt"
+        android:text="@string/op_sqrt"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="1"
+        app:row="0" />
+
+    <key
+        android:id="@id/op_sqr"
+        android:contentDescription="@string/desc_op_sqr"
+        android:text="@string/op_sqr"
+        android:theme="@style/Theme.Button.Advanced"
+        android:visibility="gone"
+        app:column="1"
+        app:row="0" />
+
+    <key
+        android:id="@id/const_pi"
+        android:contentDescription="@string/desc_const_pi"
+        android:text="@string/const_pi"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="2"
+        app:row="0" />
+
+    <key
+        android:id="@id/toggle_inv"
+        android:contentDescription="@string/desc_inv_off"
+        android:text="@string/inv"
+        android:textAllCaps="true"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="0"
+        app:row="1" />
+
+    <key
+        android:id="@id/op_pow"
+        android:contentDescription="@string/desc_op_pow"
+        android:text="@string/op_pow"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="1"
+        app:row="1" />
+
+    <key
+        android:id="@id/op_fact"
+        android:contentDescription="@string/desc_op_fact"
+        android:text="@string/op_fact"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="2"
+        app:row="1" />
+
+    <key
+        android:id="@id/fun_sin"
+        android:contentDescription="@string/desc_fun_sin"
+        android:text="@string/fun_sin"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="0"
+        app:row="2" />
+
+    <key
+        android:id="@id/fun_arcsin"
+        android:contentDescription="@string/desc_fun_arcsin"
+        android:text="@string/fun_arcsin"
+        android:theme="@style/Theme.Button.Advanced"
+        android:visibility="gone"
+        app:column="0"
+        app:row="2" />
+
+    <key
+        android:id="@id/fun_cos"
+        android:contentDescription="@string/desc_fun_cos"
+        android:text="@string/fun_cos"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="1"
+        app:row="2" />
+
+    <key
+        android:id="@id/fun_arccos"
+        android:contentDescription="@string/desc_fun_arccos"
+        android:text="@string/fun_arccos"
+        android:theme="@style/Theme.Button.Advanced"
+        android:visibility="gone"
+        app:column="1"
+        app:row="2" />
+
+    <key
+        android:id="@id/fun_tan"
+        android:contentDescription="@string/desc_fun_tan"
+        android:text="@string/fun_tan"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="2"
+        app:row="2" />
+
+    <key
+        android:id="@id/fun_arctan"
+        android:contentDescription="@string/desc_fun_arctan"
+        android:text="@string/fun_arctan"
+        android:theme="@style/Theme.Button.Advanced"
+        android:visibility="gone"
+        app:column="2"
+        app:row="2" />
+
+    <key
+        android:id="@id/const_e"
+        android:contentDescription="@string/desc_const_e"
+        android:text="@string/const_e"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="0"
+        app:row="3" />
+
+    <key
+        android:id="@id/fun_ln"
+        android:contentDescription="@string/desc_fun_ln"
+        android:text="@string/fun_ln"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="1"
+        app:row="3" />
+
+    <key
+        android:id="@id/fun_exp"
+        android:contentDescription="@string/desc_fun_exp"
+        android:text="@string/fun_exp"
+        android:theme="@style/Theme.Button.Advanced"
+        android:visibility="gone"
+        app:column="1"
+        app:row="3" />
+
+    <key
+        android:id="@id/fun_log"
+        android:contentDescription="@string/desc_fun_log"
+        android:text="@string/fun_log"
+        android:theme="@style/Theme.Button.Advanced"
+        app:column="2"
+        app:row="3" />
+
+    <key
+        android:id="@id/fun_10pow"
+        android:contentDescription="@string/desc_fun_10pow"
+        android:text="@string/fun_10pow"
+        android:theme="@style/Theme.Button.Advanced"
+        android:visibility="gone"
+        app:column="2"
+        app:row="3" />
+</keypad>

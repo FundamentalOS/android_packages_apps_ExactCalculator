@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Material 3 state layer: the button's content colour at 12% for pressed and focused. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.12" android:color="?attr/colorOnContainer" android:state_pressed="true" />
+    <item android:alpha="0.12" android:color="?attr/colorOnContainer" android:state_focused="true" />
+    <item android:alpha="0.08" android:color="?attr/colorOnContainer" android:state_hovered="true" />
+    <item android:alpha="0.12" android:color="?attr/colorOnContainer" />
+</selector>

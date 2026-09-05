@@ -13,40 +13,59 @@
 
     <include layout="@layout/toolbar" />
 
-    <LinearLayout
+    <!-- Two rows: the formula, and the result or its preview below it. After "=" the result
+         moves up into the formula's row, and the fraction it stands for, if any, appears in
+         the row it left; see Calculator.onResult(). The fraction sits behind the rows, its
+         text bottom-aligned exactly like the result's. -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_weight="1">
 
-        <com.android.calculator2.CalculatorScrollView
-            android:id="@+id/formula_scroll_view"
+        <com.android.calculator2.AlignedTextView
+            android:id="@+id/fraction"
+            style="@style/DisplayTextStyle.Fraction"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:overScrollMode="never"
-            android:scrollbars="none">
+            android:layout_height="match_parent"
+            android:maxLines="1"
+            android:textColor="@color/display_result_text_color"
+            android:visibility="invisible" />
 
-            <com.android.calculator2.CalculatorFormula
-                android:id="@+id/formula"
-                style="@style/DisplayTextStyle.Formula"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:ellipsize="none"
-                android:maxLines="1"
-                android:textColor="@color/display_formula_text_color" />
-        </com.android.calculator2.CalculatorScrollView>
-
-        <com.android.calculator2.CalculatorResult
-            android:id="@+id/result"
-            style="@style/DisplayTextStyle.Result"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:bufferType="spannable"
-            android:singleLine="true"
-            android:textColor="@color/display_result_text_color" />
-    </LinearLayout>
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <com.android.calculator2.CalculatorScrollView
+                android:id="@+id/formula_scroll_view"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <com.android.calculator2.CalculatorFormula
+                    android:id="@+id/formula"
+                    style="@style/DisplayTextStyle.Formula"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:background="@null"
+                    android:ellipsize="none"
+                    android:maxLines="1"
+                    android:textColor="@color/display_formula_text_color" />
+            </com.android.calculator2.CalculatorScrollView>
+
+            <com.android.calculator2.CalculatorResult
+                android:id="@+id/result"
+                style="@style/DisplayTextStyle.Result"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:bufferType="spannable"
+                android:singleLine="true"
+                android:textColor="@color/display_result_text_color" />
+        </LinearLayout>
+    </FrameLayout>
 
     <include layout="@layout/drag_handle" />
 

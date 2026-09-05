@@ -3,15 +3,62 @@
      SPDX-FileCopyrightText: 2014 The Android Open Source Project
      SPDX-License-Identifier: Apache-2.0
 -->
+<!--
+     This describes the rest position of the display sheet, with the advanced pad folded away;
+     the other positions are in xml/activity_calculator_scene.xml. The two horizontal
+     guidelines are moved to the system bar insets at runtime, so nothing here needs per-frame
+     padding changes while animating.
+-->
 <com.android.calculator2.DisplayMotionLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main_calculator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/activity_background"
+    android:background="?attr/colorSurfaceContainer"
     android:orientation="vertical"
     app:layoutDescription="@xml/activity_calculator_scene">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/status_bar_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="0dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/navigation_bar_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_end="0dp" />
+
+    <!-- Extends the display up under the status bar. It is anchored to the display, so it
+         travels with it and shrinks away when the display is pulled down over the pads. -->
+    <View
+        android:id="@+id/status_bar_scrim"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/display_background_color"
+        android:importantForAccessibility="no"
+        app:layout_constraintBottom_toTopOf="@id/display"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Extends the display down under the navigation bar while the history is open. It is
+         drawn behind the display and grows out from under its bottom edge, exactly filling the
+         gap that opens up as the pads slide away. -->
+    <View
+        android:id="@+id/navigation_bar_scrim"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/display_background_color"
+        android:importantForAccessibility="no"
+        app:layout_constraintBottom_toBottomOf="@id/display"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/display" />
 
     <FrameLayout
         android:id="@+id/history_frame"
@@ -23,43 +70,41 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Fills everything between the status bar and the pads. -->
     <include
         android:id="@+id/display"
         layout="@layout/display_two_line"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/advanced_pad"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="@dimen/layout_display_ratio"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/status_bar_guideline" />
 
+    <!-- Folded away between the display and the numeric pad. -->
     <include
         android:id="@+id/advanced_pad"
         layout="@layout/advanced_pad"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/input_pad"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="@dimen/layout_advanced_pad_ratio"
+        app:layout_constraintHeight_percent="0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/display" />
+        app:layout_constraintWidth_max="@dimen/pad_max_width" />
 
+    <!-- Square cells: four columns, five rows, equal margins and paddings, so the buttons are
+         circles. Capped in width so the display keeps enough room on wide screens. -->
     <include
         android:id="@+id/input_pad"
         layout="@layout/input_pad"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/navigation_bar_guideline"
+        app:layout_constraintDimensionRatio="H,4:5"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="@dimen/layout_input_pad_ratio"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/advanced_pad" />
+        app:layout_constraintWidth_max="@dimen/pad_max_width" />
 
-    <FrameLayout
-        android:id="@+id/animation_helper"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="@dimen/layout_pads_ratio"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="parent" />
 
 </com.android.calculator2.DisplayMotionLayout>

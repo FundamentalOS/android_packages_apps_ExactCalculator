@@ -4,24 +4,30 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/license_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:fitsSystemWindows="true"
     android:orientation="vertical"
-    tools:context=".Calculator">
+    tools:context=".Licenses">
 
+    <!-- Fixed height plus the status bar inset at runtime; see applyStatusBarInsetToToolbar(). -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
+        android:layout_height="?attr/actionBarSize"
         app:navigationIcon="?attr/homeAsUpIndicator"
         app:title="@string/menu_licenses" />
 
-    <WebView
-        android:id="@+id/webview"
+    <!-- The components, one row each, grouped into one rounded block; see Licenses. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/notices"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingHorizontal="@dimen/license_list_margin"
+        android:paddingVertical="@dimen/license_list_margin"
+        app:layoutManager="LinearLayoutManager" />
+
 </LinearLayout>

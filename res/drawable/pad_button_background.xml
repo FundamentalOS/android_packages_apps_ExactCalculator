@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+     A key of the pads: a fully rounded pill (a circle when square) in the key's container
+     colour, with a Material state layer on top. Keypad draws one of these per key, resolving
+     the colours from the key's theme overlay.
+-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/pad_button_ripple">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/pad_button_corner_radius" />
+            <solid android:color="?attr/colorContainer" />
+        </shape>
+    </item>
+</ripple>

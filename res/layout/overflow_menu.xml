@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Content of the overflow menu's popup window: a card with room around it for its shadow.
+     The rows are added by OverflowMenu. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:padding="@dimen/overflow_menu_shadow">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/overflow_menu_card"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="@dimen/overflow_menu_min_width"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
+        app:cardCornerRadius="@dimen/overflow_menu_corner_radius"
+        app:cardElevation="@dimen/overflow_menu_elevation"
+        app:strokeWidth="0dp">
+
+        <LinearLayout
+            android:id="@+id/overflow_menu_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingVertical="@dimen/overflow_menu_vertical_padding" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

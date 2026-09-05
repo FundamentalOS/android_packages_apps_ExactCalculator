@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Icon of the button that unfolds the advanced pad: "expand" while the pad is hidden,
+     "collapse" while it is shown, morphing between the two and fading between the outline and
+     primary colours whenever the button is toggled. -->
+<animated-selector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+
+    <item
+        android:id="@+id/advanced_shown"
+        android:drawable="@drawable/ic_collapse_all"
+        android:state_checked="true" />
+
+    <item
+        android:id="@+id/advanced_hidden"
+        android:drawable="@drawable/ic_expand_all" />
+
+    <transition
+        android:fromId="@id/advanced_hidden"
+        android:toId="@id/advanced_shown">
+        <aapt:attr name="android:drawable">
+            <animated-vector android:drawable="@drawable/ic_expand_all">
+                <target android:name="chevrons">
+                    <aapt:attr name="android:animation">
+                        <set>
+                            <objectAnimator
+                                android:duration="@integer/advanced_pad_duration"
+                                android:interpolator="@interpolator/standard"
+                                android:propertyName="pathData"
+                                android:valueFrom="@string/path_chevrons_expand"
+                                android:valueTo="@string/path_chevrons_collapse"
+                                android:valueType="pathType" />
+                            <objectAnimator
+                                android:duration="@integer/toolbar_toggle_duration"
+                                android:interpolator="@interpolator/standard"
+                                android:propertyName="fillColor"
+                                android:valueFrom="?attr/colorOutline"
+                                android:valueTo="?attr/colorPrimary"
+                                android:valueType="colorType" />
+                        </set>
+                    </aapt:attr>
+                </target>
+            </animated-vector>
+        </aapt:attr>
+    </transition>
+
+    <transition
+        android:fromId="@id/advanced_shown"
+        android:toId="@id/advanced_hidden">
+        <aapt:attr name="android:drawable">
+            <animated-vector android:drawable="@drawable/ic_collapse_all">
+                <target android:name="chevrons">
+                    <aapt:attr name="android:animation">
+                        <set>
+                            <objectAnimator
+                                android:duration="@integer/advanced_pad_duration"
+                                android:interpolator="@interpolator/standard"
+                                android:propertyName="pathData"
+                                android:valueFrom="@string/path_chevrons_collapse"
+                                android:valueTo="@string/path_chevrons_expand"
+                                android:valueType="pathType" />
+                            <objectAnimator
+                                android:duration="@integer/toolbar_toggle_duration"
+                                android:interpolator="@interpolator/standard"
+                                android:propertyName="fillColor"
+                                android:valueFrom="?attr/colorPrimary"
+                                android:valueTo="?attr/colorOutline"
+                                android:valueType="colorType" />
+                        </set>
+                    </aapt:attr>
+                </target>
+            </animated-vector>
+        </aapt:attr>
+    </transition>
+</animated-selector>

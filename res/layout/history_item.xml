@@ -26,7 +26,7 @@
         android:id="@+id/history_date"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-medium"
+        android:fontFamily="@font/google_sans_flex_medium"
         android:paddingStart="@dimen/result_padding_start"
         android:paddingEnd="@dimen/result_padding_end"
         android:text="@string/title_current_expression"

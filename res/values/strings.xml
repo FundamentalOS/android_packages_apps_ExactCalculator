@@ -29,6 +29,8 @@
       [CHAR_LIMIT=1]
       -->
     <string name="dec_point">.</string>
+    <!-- The decimal point key shows a middle dot whatever the locale's separator is. -->
+    <string name="dec_point_label" translatable="false">\u00B7</string>
 
     <!-- Decimal representation of zero (e.g. "0", "10", "1.0", "1e0"). [CHAR_LIMIT=1] -->
     <string name="digit_0" translatable="false">0</string>
@@ -219,6 +221,13 @@
     <!-- Content description for "inv" button to hide inverse functions. [CHAR_LIMIT=NONE] -->
     <string name="desc_inv_on">hide inverse functions</string>
 
+    <!-- Content description for the button that shows the scientific (advanced) functions [CHAR LIMIT=NONE] -->
+    <string name="desc_advanced_off">show scientific functions</string>
+    <!-- Content description for the button that hides the scientific (advanced) functions [CHAR LIMIT=NONE] -->
+    <string name="desc_advanced_on">hide scientific functions</string>
+    <!-- Content description for the button that opens the overflow menu [CHAR LIMIT=NONE] -->
+    <string name="desc_overflow">More options</string>
+
     <!-- Content description for formula field when it is empty. [CHAR_LIMIT=NONE] -->
     <string name="desc_formula">No formula</string>
     <!-- Content description for result field when it is empty. [CHAR_LIMIT=NONE] -->
@@ -275,7 +284,7 @@
     <!-- Menu option to access calculation history. [CHAR_LIMIT=40] -->
     <string name="menu_history">History</string>
     <!-- Menu option to clear calculation history and memory. [CHAR_LIMIT=40] -->
-    <string name="menu_clear_history">Clear</string>
+    <string name="menu_clear_history">Clear history</string>
 
     <!-- Action bar title in history page. [CHAR_LIMIT=40] -->
     <string name="title_history">History</string>

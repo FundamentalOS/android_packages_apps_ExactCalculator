@@ -4,10 +4,12 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-    <!-- layout_display_ratio + layout_pads_ratio = 1 -->
+    <!-- Height of the display while the history is open. The pads are sized from their width
+         instead; see layout/activity_calculator.xml. -->
     <item type="dimen" format="float" name="layout_display_ratio">0.3</item>
-    <!-- layout_pads_ratio = layout_advanced_pad_ratio + layout_input_pad_ratio -->
-    <item type="dimen" format="float" name="layout_pads_ratio">0.7</item>
-    <item type="dimen" format="float" name="layout_advanced_pad_ratio">0.2</item>
-    <item type="dimen" format="float" name="layout_input_pad_ratio">0.5</item>
+
+    <!-- Only the landscape layout, which sizes the pads by height, uses these; see
+         values-land/ratios.xml. They are declared here so that every configuration has them. -->
+    <item type="dimen" format="float" name="layout_pads_ratio">0.5</item>
+    <item type="dimen" format="float" name="layout_advanced_pad_ratio">0.33</item>
 </resources>

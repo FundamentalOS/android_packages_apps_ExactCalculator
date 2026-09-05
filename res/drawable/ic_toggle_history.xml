@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Icon of the button that opens the history: outline-coloured while the history is closed,
+     primary while it is open, fading between the two whenever the button is toggled. -->
+<animated-selector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+
+    <item
+        android:id="@+id/history_shown"
+        android:state_checked="true">
+        <aapt:attr name="android:drawable">
+            <vector
+                android:width="24dp"
+                android:height="24dp"
+                android:viewportWidth="960"
+                android:viewportHeight="960">
+                <path
+                    android:name="clock"
+                    android:fillColor="?attr/colorPrimary"
+                    android:pathData="@string/path_history" />
+            </vector>
+        </aapt:attr>
+    </item>
+
+    <item android:id="@+id/history_hidden">
+        <aapt:attr name="android:drawable">
+            <vector
+                android:width="24dp"
+                android:height="24dp"
+                android:viewportWidth="960"
+                android:viewportHeight="960">
+                <path
+                    android:name="clock"
+                    android:fillColor="?attr/colorOutline"
+                    android:pathData="@string/path_history" />
+            </vector>
+        </aapt:attr>
+    </item>
+
+    <transition
+        android:fromId="@id/history_hidden"
+        android:toId="@id/history_shown">
+        <aapt:attr name="android:drawable">
+            <animated-vector>
+                <aapt:attr name="android:drawable">
+                    <vector
+                        android:width="24dp"
+                        android:height="24dp"
+                        android:viewportWidth="960"
+                        android:viewportHeight="960">
+                        <path
+                            android:name="clock"
+                            android:fillColor="?attr/colorOutline"
+                            android:pathData="@string/path_history" />
+                    </vector>
+                </aapt:attr>
+                <target android:name="clock">
+                    <aapt:attr name="android:animation">
+                        <objectAnimator
+                            android:duration="@integer/toolbar_toggle_duration"
+                            android:interpolator="@interpolator/standard"
+                            android:propertyName="fillColor"
+                            android:valueFrom="?attr/colorOutline"
+                            android:valueTo="?attr/colorPrimary"
+                            android:valueType="colorType" />
+                    </aapt:attr>
+                </target>
+            </animated-vector>
+        </aapt:attr>
+    </transition>
+
+    <transition
+        android:fromId="@id/history_shown"
+        android:toId="@id/history_hidden">
+        <aapt:attr name="android:drawable">
+            <animated-vector>
+                <aapt:attr name="android:drawable">
+                    <vector
+                        android:width="24dp"
+                        android:height="24dp"
+                        android:viewportWidth="960"
+                        android:viewportHeight="960">
+                        <path
+                            android:name="clock"
+                            android:fillColor="?attr/colorPrimary"
+                            android:pathData="@string/path_history" />
+                    </vector>
+                </aapt:attr>
+                <target android:name="clock">
+                    <aapt:attr name="android:animation">
+                        <objectAnimator
+                            android:duration="@integer/toolbar_toggle_duration"
+                            android:interpolator="@interpolator/standard"
+                            android:propertyName="fillColor"
+                            android:valueFrom="?attr/colorPrimary"
+                            android:valueTo="?attr/colorOutline"
+                            android:valueType="colorType" />
+                    </aapt:attr>
+                </target>
+            </animated-vector>
+        </aapt:attr>
+    </transition>
+</animated-selector>

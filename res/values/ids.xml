@@ -4,6 +4,45 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
+    <!-- Keys of the pads; see the keys resources in xml/. -->
+    <item name="clr" type="id"/>
+    <item name="paren" type="id"/>
     <item name="lparen" type="id"/>
     <item name="rparen" type="id"/>
+    <item name="op_pct" type="id"/>
+    <item name="op_div" type="id"/>
+    <item name="op_mul" type="id"/>
+    <item name="op_sub" type="id"/>
+    <item name="op_add" type="id"/>
+    <item name="digit_0" type="id"/>
+    <item name="digit_1" type="id"/>
+    <item name="digit_2" type="id"/>
+    <item name="digit_3" type="id"/>
+    <item name="digit_4" type="id"/>
+    <item name="digit_5" type="id"/>
+    <item name="digit_6" type="id"/>
+    <item name="digit_7" type="id"/>
+    <item name="digit_8" type="id"/>
+    <item name="digit_9" type="id"/>
+    <item name="dec_point" type="id"/>
+    <item name="del" type="id"/>
+    <item name="eq" type="id"/>
+    <item name="op_sqrt" type="id"/>
+    <item name="op_sqr" type="id"/>
+    <item name="op_pow" type="id"/>
+    <item name="op_fact" type="id"/>
+    <item name="const_pi" type="id"/>
+    <item name="const_e" type="id"/>
+    <item name="toggle_mode" type="id"/>
+    <item name="toggle_inv" type="id"/>
+    <item name="fun_sin" type="id"/>
+    <item name="fun_cos" type="id"/>
+    <item name="fun_tan" type="id"/>
+    <item name="fun_arcsin" type="id"/>
+    <item name="fun_arccos" type="id"/>
+    <item name="fun_arctan" type="id"/>
+    <item name="fun_ln" type="id"/>
+    <item name="fun_log" type="id"/>
+    <item name="fun_exp" type="id"/>
+    <item name="fun_10pow" type="id"/>
 </resources>

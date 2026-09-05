@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- The overflow menu grows out of its top end corner, where the button that opened it is. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@interpolator/standard">
+    <scale
+        android:duration="@integer/overflow_menu_enter_duration"
+        android:fromXScale="0.6"
+        android:fromYScale="0.6"
+        android:pivotX="100%"
+        android:pivotY="0%"
+        android:toXScale="1"
+        android:toYScale="1" />
+    <alpha
+        android:duration="@integer/overflow_menu_enter_duration"
+        android:fromAlpha="0"
+        android:toAlpha="1" />
+</set>

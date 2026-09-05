@@ -13,6 +13,16 @@
     <dimen name="drag_handle_margin">8dp</dimen>
     <dimen name="display_corner_radius">16dp</dimen>
 
+    <!-- The open source licences pages: a grouped list of the notices, and a reader for each. -->
+    <dimen name="license_list_margin">16dp</dimen>
+    <dimen name="license_list_corner_radius">24dp</dimen>
+    <dimen name="license_item_corner_radius">4dp</dimen>
+    <dimen name="license_item_gap">4dp</dimen>
+    <dimen name="license_item_padding_horizontal">16dp</dimen>
+    <dimen name="license_item_padding_vertical">16dp</dimen>
+    <dimen name="license_text_padding">16dp</dimen>
+    <dimen name="license_text_size">13sp</dimen>
+
     <!-- Dimens for display formula. -->
     <dimen name="formula_padding_top">16dip</dimen>
     <dimen name="formula_padding_bottom">8dip</dimen>
@@ -30,12 +40,37 @@
     <dimen name="result_textsize">32dip</dimen>
 
     <!-- Pads -->
-    <dimen name="pads_horizontal_edge_padding">8dp</dimen>
-    <dimen name="pads_vertical_edge_padding">8dp</dimen>
-    <dimen name="pads_intra_padding">4dp</dimen>
+    <dimen name="pads_horizontal_edge_padding">2dp</dimen>
+    <dimen name="pads_vertical_edge_padding">2dp</dimen>
 
     <!-- Buttons -->
-    <dimen name="button_horizontal_margin">4dp</dimen>
-    <dimen name="button_small_horizontal_margin">2dp</dimen>
-    <dimen name="button_iconsize">48dp</dimen>
+    <dimen name="button_horizontal_margin">2dp</dimen>
+    <!-- Widest the numeric pad gets while its buttons are circles, so that the display keeps
+         enough room on wide screens. -->
+    <dimen name="pad_max_width">440dp</dimen>
+    <!-- Toolbar metrics: the 24dp icons at both ends sit 16dp from the screen edge and every
+         gap between neighbours is 24dp. The icon buttons' own padding (8dp for the 40dp toggles,
+         12dp for the 48dp overflow button) makes up the rest. -->
+    <dimen name="toolbar_content_inset_start">8dp</dimen>
+    <dimen name="toolbar_icon_button_gap">8dp</dimen>
+    <dimen name="toolbar_overflow_margin_end">4dp</dimen>
+    <!-- The overflow button's 12dp padding completes the 24dp gap to the mode indicator. -->
+    <dimen name="toolbar_mode_margin_end">12dp</dimen>
+
+    <!-- The overflow menu popup. -->
+    <dimen name="overflow_menu_shadow">8dp</dimen>
+    <dimen name="overflow_menu_min_width">200dp</dimen>
+    <dimen name="overflow_menu_corner_radius">16dp</dimen>
+    <dimen name="overflow_menu_elevation">3dp</dimen>
+    <dimen name="overflow_menu_vertical_padding">8dp</dimen>
+    <dimen name="overflow_menu_item_height">48dp</dimen>
+    <dimen name="overflow_menu_item_padding_start">16dp</dimen>
+    <dimen name="overflow_menu_item_padding_end">24dp</dimen>
+    <dimen name="overflow_menu_icon_size">24dp</dimen>
+    <dimen name="overflow_menu_icon_gap">16dp</dimen>
+
+    <!-- Larger than any button's half height, so the corners are always fully round. -->
+    <dimen name="pad_button_corner_radius">1000dp</dimen>
+    <!-- The toolbar toggles are 48dp touch targets around a 40dp disc. -->
+    <dimen name="toolbar_toggle_inset">4dp</dimen>
 </resources>

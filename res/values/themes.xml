@@ -5,11 +5,11 @@
 -->
 <resources>
 
+    <!-- Both activities are laid out edge-to-edge: the system bars are made transparent by
+         enableEdgeToEdge() at runtime, and the views apply the insets themselves. -->
     <style name="Theme" parent="Theme.Material3Expressive.DayNight">
-        <item name="android:statusBarColor">@color/display_background_color</item>
-        <item name="android:windowLightStatusBar">?isLightTheme</item>
-        <item name="android:navigationBarColor">?colorSurface</item>
-        <item name="android:windowLightNavigationBar">?isLightTheme</item>
+        <item name="android:windowBackground">?attr/colorSurfaceContainer</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
     </style>
 
     <style name="Theme.Calculator">
@@ -20,43 +20,51 @@
     </style>
 
     <style name="Theme.Licenses" parent="Theme.Material3Expressive.DayNight.NoActionBar">
-        <item name="android:statusBarColor">?colorSurface</item>
-        <item name="android:windowLightStatusBar">?isLightTheme</item>
-        <item name="android:navigationBarColor">?colorSurface</item>
-        <item name="android:windowLightNavigationBar">?isLightTheme</item>
+        <item name="android:windowBackground">?attr/colorSurfaceContainer</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
     </style>
 
+    <!-- Window animations of the overflow menu; see OverflowMenu. -->
+    <style name="Animation.Calculator.OverflowMenu" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/overflow_menu_enter</item>
+        <item name="android:windowExitAnimation">@anim/overflow_menu_exit</item>
+    </style>
+
+    <!-- Key colours. Keypad paints each key's background with colorContainer and its label
+         with colorOnContainer, resolved from the key's overlay; see pad_button_background.xml. -->
     <style name="Theme.Button" parent="ThemeOverlay.Material3Expressive.Button.TextButton">
     </style>
 
-    <style name="Theme.Button.Advanced">
-        <item name="colorContainer">?colorSurface</item>
-        <item name="colorOnContainer">?colorOnSurface</item>
-    </style>
-
+    <!-- Digits, decimal point and backspace. -->
     <style name="Theme.Button.Numeric">
-        <item name="colorContainer">?colorSurfaceVariant</item>
+        <item name="colorContainer">?colorSurfaceBright</item>
         <item name="colorOnContainer">?colorOnSurface</item>
     </style>
 
+    <style name="Theme.Button.Delete" parent="Theme.Button.Numeric" />
+
+    <!-- Every operator, function and constant. -->
     <style name="Theme.Button.Operator">
         <item name="colorContainer">?colorSecondaryContainer</item>
         <item name="colorOnContainer">?colorOnSecondaryContainer</item>
     </style>
 
-    <style name="Theme.Button.Clear">
-        <item name="colorContainer">?colorSurfaceVariant</item>
-        <item name="colorOnContainer">?colorOnSurfaceVariant</item>
+    <!-- Functions and constants on the advanced pad. -->
+    <style name="Theme.Button.Advanced">
+        <item name="colorContainer">?colorSurface</item>
+        <item name="colorOnContainer">?colorOnSurface</item>
     </style>
 
-    <style name="Theme.Button.Action">
+    <!-- AC. -->
+    <style name="Theme.Button.AllClear">
+        <item name="colorContainer">?colorTertiaryContainer</item>
+        <item name="colorOnContainer">?colorOnTertiaryContainer</item>
+    </style>
+
+    <!-- Equals. -->
+    <style name="Theme.Button.Equals">
         <item name="colorContainer">?colorPrimaryContainer</item>
         <item name="colorOnContainer">?colorOnPrimaryContainer</item>
-    </style>
-
-    <style name="Theme.Button.Equals">
-        <item name="colorContainer">?colorTertiary</item>
-        <item name="colorOnContainer">?colorOnTertiary</item>
     </style>
 
 </resources>

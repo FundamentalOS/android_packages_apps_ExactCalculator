@@ -31,11 +31,10 @@
                 style="@style/DisplayTextStyle.Formula"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:background="@null"
                 android:ellipsize="none"
-                android:longClickable="true"
                 android:singleLine="true"
-                android:textColor="@color/display_formula_text_color"
-                android:textIsSelectable="false" />
+                android:textColor="@color/display_formula_text_color" />
 
         </com.android.calculator2.CalculatorScrollView>
 

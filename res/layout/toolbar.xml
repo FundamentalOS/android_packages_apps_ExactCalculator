@@ -3,19 +3,73 @@
      SPDX-FileCopyrightText: 2016 The Android Open Source Project
      SPDX-License-Identifier: Apache-2.0
 -->
+<!-- The history button and the advanced pad toggle sit at the start of the toolbar, the
+     overflow button and the mode indicator at the end (end-aligned children are laid out from
+     the end, so the overflow button is declared first). The outermost 24dp icons are 16dp from
+     the edge of the screen and every gap between neighbours is 24dp; see the toolbar dimens. The
+     toggles carry their own background and icon colours (toolbar_toggle_background.xml and the
+     ic_toggle_* drawables) so that both can animate between the unchecked and checked looks;
+     the icon button style's own (transparent) background tint must not be applied to them. -->
 <androidx.appcompat.widget.Toolbar
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/toolbar"
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
-    android:layout_gravity="top">
+    android:layout_gravity="top"
+    app:contentInsetEnd="0dp"
+    app:contentInsetEndWithActions="0dp"
+    app:contentInsetStart="@dimen/toolbar_content_inset_start">
+
+    <!-- Opens the overflow menu; see OverflowMenu. -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/overflow"
+        style="?attr/materialIconButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginEnd="@dimen/toolbar_overflow_margin_end"
+        android:contentDescription="@string/desc_overflow"
+        app:icon="@drawable/ic_more_vert"
+        app:iconTint="?attr/colorOutline" />
 
     <TextView
         android:id="@+id/mode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-medium"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="@dimen/toolbar_mode_margin_end"
+        android:fontFamily="@font/google_sans_flex_medium"
         android:textAllCaps="true"
         android:textSize="16sp" />
+
+    <!-- Pulls the display down over the pads and back; see Calculator.onHistoryToggled(). -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/toggle_history"
+        style="?attr/materialIconButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:background="@drawable/toolbar_toggle_background"
+        android:checkable="true"
+        android:contentDescription="@string/menu_history"
+        app:backgroundTint="@null"
+        app:icon="@drawable/ic_toggle_history"
+        app:iconTint="@null" />
+
+    <!-- Unfolds the advanced pad over the numeric pad; see Calculator.onAdvancedToggled(). -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/toggle_advanced"
+        style="?attr/materialIconButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:layout_marginStart="@dimen/toolbar_icon_button_gap"
+        android:background="@drawable/toolbar_toggle_background"
+        android:checkable="true"
+        android:contentDescription="@string/desc_advanced_off"
+        app:backgroundTint="@null"
+        app:icon="@drawable/ic_toggle_advanced"
+        app:iconTint="@null" />
 
 </androidx.appcompat.widget.Toolbar>

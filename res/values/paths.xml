@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: Material Design Authors / Google LLC
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Material Symbols "expand_all" and "collapse_all" in a 960 viewport. Both paths list
+         the vertices of each chevron in the same order, starting at the inner end of the left
+         arm for the bottom chevron and at the outer apex for the top one, so that animating
+         between them flips the chevrons instead of shuffling their corners around. -->
+    <string name="path_chevrons_expand" translatable="false">M297,583L240,640L480,880L720,640L663,583L480,766ZM480,80L240,320L298,376L480,194L662,376L720,320Z</string>
+    <string name="path_chevrons_collapse" translatable="false">M296,880L240,824L480,584L720,824L664,880L480,696ZM480,376L240,136L296,80L480,264L664,80L720,136Z</string>
+    <!-- Material Symbols "history". -->
+    <string name="path_history" translatable="false">M480,840Q342,840 239.5,748.5Q137,657 122,520L204,520Q218,624 296.5,692Q375,760 480,760Q597,760 678.5,678.5Q760,597 760,480Q760,363 678.5,281.5Q597,200 480,200Q411,200 351,232Q291,264 250,320L360,320L360,400L120,400L120,160L200,160L200,254Q251,190 324.5,155Q398,120 480,120Q555,120 620.5,148.5Q686,177 734.5,225.5Q783,274 811.5,339.5Q840,405 840,480Q840,555 811.5,620.5Q783,686 734.5,734.5Q686,783 620.5,811.5Q555,840 480,840ZM592,648L440,496L440,280L520,280L520,464L648,592L592,648Z</string>
+</resources>

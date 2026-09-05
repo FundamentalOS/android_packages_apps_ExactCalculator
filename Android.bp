@@ -16,7 +16,7 @@ android_app {
 
     overrides: ["Calculator"],
 
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.kt"],
 
     optimize: {
         proguard_flags_files: ["proguard.flags"],
@@ -26,11 +26,15 @@ android_app {
 
     static_libs: [
         // DO NOT EDIT THIS SECTION MANUALLY
+        "androidx.datastore_datastore",
+        "androidx.datastore_datastore-core",
+        "androidx.datastore_datastore-preferences",
         "androidx.graphics_graphics-shapes",
-        "androidx.gridlayout_gridlayout",
-        "androidx.webkit_webkit",
+        "androidx.lifecycle_lifecycle-runtime",
+        "androidx.lifecycle_lifecycle-runtime-ktx",
         "com.google.android.material_material",
         "ExactCalculator_com.hp_crcalc",
         "kotlin-stdlib",
+        "kotlinx-coroutines-android",
     ],
 }

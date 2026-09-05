@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+     Google Sans Flex. The app ships the single variable font file and instances it here along
+     its weight axis: this family stands in for "sans-serif", google_sans_flex_medium for
+     "sans-serif-medium". The other axes keep their defaults (optical size 18, normal width).
+-->
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+    <font
+        android:font="@font/google_sans_flex_vf"
+        android:fontStyle="normal"
+        android:fontVariationSettings="'wght' 400"
+        android:fontWeight="400" />
+    <font
+        android:font="@font/google_sans_flex_vf"
+        android:fontStyle="normal"
+        android:fontVariationSettings="'wght' 700"
+        android:fontWeight="700" />
+</font-family>
