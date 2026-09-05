@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2015 The Android Open Source Project
+ * SPDX-FileCopyrightText: The FundamentalOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -359,6 +360,9 @@ class CalculatorExpr() {
 
     /** The position after the last token. */
     val end: Position get() = Position(expr.size, 0)
+
+    /** Is [at] the end of the expression? */
+    fun isAtEnd(at: Position) = normalised(at) == end
 
     private fun normalised(token: Int, offset: Int): Position {
         val t = expr.getOrNull(token)

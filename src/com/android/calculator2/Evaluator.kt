@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2016 The Android Open Source Project
+ * SPDX-FileCopyrightText: The FundamentalOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -928,8 +929,21 @@ class Evaluator private constructor(
      */
     fun insert(id: Int, at: CalculatorExpr.Position): CalculatorExpr.Position? {
         if (id == R.id.fun_10pow) return insert10pow(at) // Handled as macro expansion.
-        changedValue = changedValue || !KeyMaps.isBinary(id)
+        // A binary operator at the very end does not count towards the value; anywhere else
+        // it, or the operator it replaces, does.
+        changedValue = changedValue || !KeyMaps.isBinary(id) || !mainExpr.expr.isAtEnd(at)
         return mainExpr.expr.insert(id, at)
+    }
+
+    /**
+     * Remove the op_add and op_sub operators just before [at] in the main expression; see
+     * CalculatorExpr.removeAdditiveOperatorsBefore(). Trailing ones do not count towards the
+     * value, any others do.
+     */
+    fun removeAdditiveOperatorsBefore(at: CalculatorExpr.Position): CalculatorExpr.Position {
+        val position = mainExpr.expr.removeAdditiveOperatorsBefore(at)
+        if (!mainExpr.expr.isAtEnd(position)) changedValue = true
+        return position
     }
 
     /** Delete the character or token before [at] in the main expression; see CalculatorExpr.deleteBefore(). */

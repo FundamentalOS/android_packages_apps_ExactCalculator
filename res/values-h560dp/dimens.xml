@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: The FundamentalOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+     The display's text and its spacing on windows tall enough for them: phones held upright.
+     The defaults in values/ are the compact versions for shorter windows, such as a split
+     screen, where the display is held to its minimum height; see display_min_height.
+-->
+<resources>
+    <dimen name="formula_padding_top">16dip</dimen>
+    <dimen name="formula_padding_bottom">8dip</dimen>
+    <dimen name="formula_min_textsize">32dip</dimen>
+    <dimen name="formula_max_textsize">48dip</dimen>
+
+    <dimen name="result_padding_top">8dip</dimen>
+    <dimen name="result_padding_bottom">32dip</dimen>
+    <dimen name="result_textsize">32dip</dimen>
+</resources>

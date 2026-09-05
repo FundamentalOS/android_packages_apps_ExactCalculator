@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
      SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: The FundamentalOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <!--
@@ -66,25 +67,31 @@
     <ConstraintSet
         android:id="@id/state_advanced"
         motion:deriveConstraintsFrom="@id/state_basic">
-        <!-- The pads share the 4:5 area of the rest position 3:5, i.e. 15/32 and 25/32 of
-             their width, so the display does not move and the rows stay equal. -->
+        <!-- The pads share the area of the rest position as a chain, 3 rows to 5, so the
+             display does not move and the rows stay equal; their widths follow their heights,
+             32:15 and 32:25, so they stay as wide as the numeric pad was. -->
         <Constraint
             android:id="@id/advanced_pad"
             android:layout_width="0dp"
             android:layout_height="0dp"
             motion:layout_constraintBottom_toTopOf="@id/input_pad"
-            motion:layout_constraintDimensionRatio="H,32:15"
+            motion:layout_constraintDimensionRatio="W,32:15"
             motion:layout_constraintEnd_toEndOf="parent"
             motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toBottomOf="@id/pads_top_guideline"
+            motion:layout_constraintVertical_chainStyle="spread"
+            motion:layout_constraintVertical_weight="15"
             motion:layout_constraintWidth_max="@dimen/pad_max_width" />
         <Constraint
             android:id="@id/input_pad"
             android:layout_width="0dp"
             android:layout_height="0dp"
             motion:layout_constraintBottom_toTopOf="@id/navigation_bar_guideline"
-            motion:layout_constraintDimensionRatio="H,32:25"
+            motion:layout_constraintDimensionRatio="W,32:25"
             motion:layout_constraintEnd_toEndOf="parent"
             motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toBottomOf="@id/advanced_pad"
+            motion:layout_constraintVertical_weight="25"
             motion:layout_constraintWidth_max="@dimen/pad_max_width" />
     </ConstraintSet>
 
@@ -125,25 +132,8 @@
             motion:layout_constraintEnd_toEndOf="parent"
             motion:layout_constraintStart_toStartOf="parent"
             motion:layout_constraintTop_toTopOf="@id/display" />
-        <!-- The pads keep their size and slide off the bottom of the screen. -->
-        <Constraint
-            android:id="@id/advanced_pad"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintHeight_percent="0"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintTop_toBottomOf="parent"
-            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
-        <Constraint
-            android:id="@id/input_pad"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            motion:layout_constraintDimensionRatio="H,4:5"
-            motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintTop_toBottomOf="@id/advanced_pad"
-            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
+        <!-- The pads keep their place and size; Calculator.updateSceneGeometry() translates
+             them off the bottom of the screen, so they need no measuring as they slide. -->
     </ConstraintSet>
 
     <ConstraintSet
@@ -183,24 +173,7 @@
             motion:layout_constraintEnd_toEndOf="parent"
             motion:layout_constraintStart_toStartOf="parent"
             motion:layout_constraintTop_toTopOf="@id/display" />
-        <!-- The pads keep their size and slide off the bottom of the screen. -->
-        <Constraint
-            android:id="@id/advanced_pad"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            motion:layout_constraintDimensionRatio="H,32:15"
-            motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintTop_toBottomOf="parent"
-            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
-        <Constraint
-            android:id="@id/input_pad"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            motion:layout_constraintDimensionRatio="H,32:25"
-            motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintStart_toStartOf="parent"
-            motion:layout_constraintTop_toBottomOf="@id/advanced_pad"
-            motion:layout_constraintWidth_max="@dimen/pad_max_width" />
+        <!-- The pads keep their place and size; Calculator.updateSceneGeometry() translates
+             them off the bottom of the screen, so they need no measuring as they slide. -->
     </ConstraintSet>
 </MotionScene>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
      SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: The FundamentalOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <!-- A component's row in the licences list; its background is set by position, see Licenses. -->

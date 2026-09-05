@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
      SPDX-FileCopyrightText: 2014 The Android Open Source Project
+     SPDX-FileCopyrightText: The FundamentalOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
@@ -24,20 +25,22 @@
     <dimen name="license_text_size">13sp</dimen>
 
     <!-- Dimens for display formula. -->
-    <dimen name="formula_padding_top">16dip</dimen>
-    <dimen name="formula_padding_bottom">8dip</dimen>
+    <!-- Compact: for windows shorter than 560dp, such as a split screen. Taller windows get
+         the roomier values in values-h560dp; tablets and landscape have their own. -->
+    <dimen name="formula_padding_top">8dip</dimen>
+    <dimen name="formula_padding_bottom">4dip</dimen>
     <dimen name="formula_padding_start">16dip</dimen>
     <dimen name="formula_padding_end">16dip</dimen>
-    <dimen name="formula_min_textsize">32dip</dimen>
-    <dimen name="formula_max_textsize">48dip</dimen>
+    <dimen name="formula_min_textsize">28dip</dimen>
+    <dimen name="formula_max_textsize">36dip</dimen>
     <dimen name="formula_step_textsize">8dip</dimen>
 
     <!-- Dimens for display result. -->
-    <dimen name="result_padding_top">8dip</dimen>
-    <dimen name="result_padding_bottom">32dip</dimen>
+    <dimen name="result_padding_top">4dip</dimen>
+    <dimen name="result_padding_bottom">12dip</dimen>
     <dimen name="result_padding_start">16dip</dimen>
     <dimen name="result_padding_end">16dip</dimen>
-    <dimen name="result_textsize">32dip</dimen>
+    <dimen name="result_textsize">28dip</dimen>
 
     <!-- Pads -->
     <dimen name="pads_horizontal_edge_padding">2dp</dimen>
@@ -48,6 +51,9 @@
     <!-- Widest the numeric pad gets while its buttons are circles, so that the display keeps
          enough room on wide screens. -->
     <dimen name="pad_max_width">440dp</dimen>
+    <!-- Toolbar plus two rows of text at the compact sizes above: the pads shrink rather than
+         take the display below this. -->
+    <dimen name="display_min_height">176dp</dimen>
     <!-- Toolbar metrics: the 24dp icons at both ends sit 16dp from the screen edge and every
          gap between neighbours is 24dp. The icon buttons' own padding (8dp for the 40dp toggles,
          12dp for the 48dp overflow button) makes up the rest. -->

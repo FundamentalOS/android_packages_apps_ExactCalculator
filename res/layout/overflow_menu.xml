@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
      SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: The FundamentalOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <!-- Content of the overflow menu's popup window: a card with room around it for its shadow.

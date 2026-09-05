@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
      SPDX-FileCopyrightText: 2014 The Android Open Source Project
+     SPDX-FileCopyrightText: The FundamentalOS Project
      SPDX-License-Identifier: Apache-2.0
 -->
 <!--
@@ -28,6 +29,17 @@
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/navigation_bar_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_end="0dp" />
+
+    <!-- The top of the pads: 5/4 of their width above the navigation bar, unless that would
+         leave the display less than its minimum height, as in a split screen, in which case
+         the pads are shorter, and narrower to match. Moved at runtime; see
+         Calculator.updateSceneGeometry(). -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/pads_top_guideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -76,7 +88,7 @@
         layout="@layout/display_two_line"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/advanced_pad"
+        app:layout_constraintBottom_toTopOf="@id/pads_top_guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/status_bar_guideline" />
@@ -91,19 +103,23 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pads_top_guideline"
         app:layout_constraintWidth_max="@dimen/pad_max_width" />
 
-    <!-- Square cells: four columns, five rows, equal margins and paddings, so the buttons are
-         circles. Capped in width so the display keeps enough room on wide screens. -->
+    <!-- Square cells: four columns, five rows, equal margins and paddings, so the keys are
+         circles. Its width follows its height, 4:5, so that it is as wide as the screen (up
+         to a cap, so the display keeps enough room on wide screens) when the guideline is 5/4
+         of that above the navigation bar, and narrower when the guideline is lower. -->
     <include
         android:id="@+id/input_pad"
         layout="@layout/input_pad"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@id/navigation_bar_guideline"
-        app:layout_constraintDimensionRatio="H,4:5"
+        app:layout_constraintDimensionRatio="W,4:5"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pads_top_guideline"
         app:layout_constraintWidth_max="@dimen/pad_max_width" />
 
 

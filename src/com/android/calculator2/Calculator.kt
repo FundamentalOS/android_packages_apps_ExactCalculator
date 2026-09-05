@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2016 The Android Open Source Project
+ * SPDX-FileCopyrightText: The FundamentalOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -58,6 +59,9 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
+import kotlin.math.max
+import kotlin.math.min
+
 class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFragment.OnClickListener,
     Evaluator.EvaluationListener /* for main result */ {
 
@@ -109,7 +113,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
             val uri = item.uri
             if (uri != null && evaluator.isLastSaved(uri)) {
                 clearIfNotInputState()
-                beginEdit()
+                beginEdit(currentSelection())
                 cursor = evaluator.insertExpr(evaluator.savedIndex, cursor)
                 redisplayAfterFormulaChange()
             } else {
@@ -122,7 +126,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
             clearIfNotInputState()
             val memoryIndex = evaluator.memoryIndex
             if (memoryIndex != 0L) {
-                beginEdit()
+                beginEdit(currentSelection())
                 cursor = evaluator.insertExpr(memoryIndex, cursor)
                 redisplayAfterFormulaChange()
             }
@@ -169,6 +173,12 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
      * by the edits, and put back into the formula when it is redisplayed.
      */
     private var cursor = CalculatorExpr.Position(0, 0)
+
+    /**
+     * The formula's selection as a touch began, before stopping its text action mode collapsed
+     * it, so that a key the touch ends on can still act on it; see dispatchTouchEvent().
+     */
+    private var touchSelection: IntRange? = null
 
     // Characters that were recently entered at the end of the display that have not yet
     // been added to the underlying expression.
@@ -521,10 +531,15 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
 
     override fun dispatchTouchEvent(e: MotionEvent): Boolean {
         if (e.actionMasked == MotionEvent.ACTION_DOWN) {
+            touchSelection = currentSelection()
             stopActionModeOrContextMenu()
             if (isHistoryShowing) historyFragment?.stopActionModeOrContextMenu()
         }
-        return super.dispatchTouchEvent(e)
+        val handled = super.dispatchTouchEvent(e)
+        if (e.actionMasked == MotionEvent.ACTION_UP || e.actionMasked == MotionEvent.ACTION_CANCEL) {
+            touchSelection = null
+        }
+        return handled
     }
 
     /**
@@ -545,6 +560,9 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         // Allow the system to handle special key codes (e.g. "BACK" or "DPAD").
         if (keyCode in SYSTEM_KEY_CODES) return super.onKeyUp(keyCode, event)
 
+        // The selection, before stopping the action mode collapses it.
+        val selection = currentSelection()
+
         // Stop the action mode or context menu if it's showing.
         stopActionModeOrContextMenu()
 
@@ -555,7 +573,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
 
         when (keyCode) {
             KeyEvent.KEYCODE_NUMPAD_ENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_DPAD_CENTER -> onEquals()
-            KeyEvent.KEYCODE_DEL -> onDelete()
+            KeyEvent.KEYCODE_DEL -> onDelete(selection)
             KeyEvent.KEYCODE_CLEAR -> onClear()
             else -> {
                 cancelIfEvaluating(false)
@@ -568,7 +586,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
                 if (c == '=') {
                     onEquals()
                 } else {
-                    addChars(c.toString(), true)
+                    addChars(c.toString(), true, selection)
                     redisplayAfterFormulaChange()
                 }
             }
@@ -623,21 +641,52 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
     }
 
     /**
-     * Start an edit where the formula's cursor is. Text the user selected is deleted first, as
-     * typing over a selection does. Characters that could not be processed only ever sit at
-     * the end, so while there are any the cursor is the end.
+     * The formula's selection as the offsets of its start and end into the formula's text;
+     * both the same at a plain cursor.
+     */
+    private fun currentSelection(): IntRange {
+        val start = formulaText.selectionStart
+        val end = formulaText.selectionEnd
+        if (start < 0 || end < 0) return formulaText.length().let { it..it }
+        return minOf(start, end)..maxOf(start, end)
+    }
+
+    /**
+     * Start an edit at [selection]: at its end, after deleting what it selected, as typing over
+     * a selection does. Characters that could not be processed only ever sit at the end, so
+     * while there are any the cursor is the end.
      * @return whether a selection was deleted
      */
-    private fun beginEdit(): Boolean {
-        val start = minOf(formulaText.selectionStart, formulaText.selectionEnd)
-        val end = maxOf(formulaText.selectionStart, formulaText.selectionEnd)
-        if (haveUnprocessed() || start < 0) {
+    private fun beginEdit(selection: IntRange): Boolean {
+        if (haveUnprocessed() || currentState == CalculatorState.RESULT) {
+            // A result is continued or replaced whole; see switchToInput().
             cursor = mainExpr.end
             return false
         }
-        cursor = mainExpr.positionOf(this, end)
-        if (start == end) return false
-        cursor = evaluator.deleteRange(mainExpr.positionOf(this, start), cursor)
+        cursor = mainExpr.positionOf(this, selection.last)
+        if (selection.first == selection.last) return false
+        cursor = evaluator.deleteRange(mainExpr.positionOf(this, selection.first), cursor)
+        return true
+    }
+
+    /**
+     * The parenthesis key, with something selected, puts the selection in parentheses rather
+     * than replacing it; returns whether it did.
+     */
+    private fun wrapSelectionInParentheses(selection: IntRange): Boolean {
+        if (selection.first == selection.last || haveUnprocessed() || currentState == CalculatorState.RESULT) {
+            return false
+        }
+        val from = mainExpr.positionOf(this, selection.first)
+        val to = mainExpr.positionOf(this, selection.last)
+        if (from == to) return false
+        if (currentState == CalculatorState.ERROR) setState(CalculatorState.INPUT)
+        // The closing one first, so that the opening one does not move the place for it; the
+        // opening one then moves the closing one along by the tokens it adds.
+        val afterClose = evaluator.insert(R.id.rparen, to) ?: return false
+        cursor = afterClose
+        val afterOpen = evaluator.insert(R.id.lparen, from) ?: return true
+        cursor = CalculatorExpr.Position(afterClose.token + (afterOpen.token - from.token), 0)
         return true
     }
 
@@ -660,7 +709,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
      */
     private fun addExplicitKeyToExpr(id: Int) {
         if (currentState == CalculatorState.INPUT && id == R.id.op_sub) {
-            cursor = mainExpr.removeAdditiveOperatorsBefore(cursor)
+            cursor = evaluator.removeAdditiveOperatorsBefore(cursor)
         }
         addKeyToExpr(id)
     }
@@ -686,6 +735,10 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
 
     /** A key of either pad was tapped. */
     private fun onKey(id: Int) {
+        // The selection, before the formula's action mode is stopped, which collapses it; a
+        // touch stopped it at touch-down already, and kept what it saw.
+        val selection = touchSelection ?: currentSelection()
+
         // Any animation is ended before we get here.
         stopActionModeOrContextMenu()
 
@@ -694,7 +747,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
 
         when (id) {
             R.id.eq -> onEquals()
-            R.id.del -> onDelete()
+            R.id.del -> onDelete(selection)
             R.id.clr -> onClear()
             R.id.toggle_inv -> {
                 val selected = !inverseMode
@@ -719,17 +772,21 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
                 if (!haveUnprocessed()) evaluateInstantIfNecessary()
             }
             R.id.paren -> {
+                // With something selected, put it in parentheses. Otherwise:
                 // If the cursor follows a function or left paren, add another.
                 // If there are no open parentheses before it, add a left one.
                 // If it follows a digit, symbolic constant, right parenthesis, or suffix
                 // operator, add a right one.
                 // If it follows an operator, add a left one.
-                beginEdit()
-                val closes = mainExpr.run {
-                    !hasLeftParenBefore(cursor) && hasOpenParenthesesBefore(cursor) &&
-                        (hasRightParenBefore(cursor) || hasConstantBefore(cursor) || hasSuffixBefore(cursor))
+                cancelIfEvaluating(false)
+                if (!wrapSelectionInParentheses(selection)) {
+                    beginEdit(selection)
+                    val closes = mainExpr.run {
+                        !hasLeftParenBefore(cursor) && hasOpenParenthesesBefore(cursor) &&
+                            (hasRightParenBefore(cursor) || hasConstantBefore(cursor) || hasSuffixBefore(cursor))
+                    }
+                    addExplicitKeyToExpr(if (closes) R.id.rparen else R.id.lparen)
                 }
-                addExplicitKeyToExpr(if (closes) R.id.rparen else R.id.lparen)
                 redisplayAfterFormulaChange()
             }
             else -> {
@@ -737,9 +794,9 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
                 if (haveUnprocessed()) {
                     // For consistency, append as uninterpreted characters.
                     // This may actually be useful for a left parenthesis.
-                    addChars(KeyMaps.toString(this, id), true)
+                    addChars(KeyMaps.toString(this, id), true, selection)
                 } else {
-                    beginEdit()
+                    beginEdit(selection)
                     addExplicitKeyToExpr(id)
                     redisplayAfterFormulaChange()
                 }
@@ -837,7 +894,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         }
     }
 
-    private fun onDelete() {
+    private fun onDelete(selection: IntRange) {
         // Delete works like backspace; remove the character or operator before the cursor, or
         // the selection. Note that we handle keyboard delete exactly like the delete button.
         // For example the delete button can be used to delete a character from an incomplete
@@ -850,7 +907,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         if (!unprocessed.isNullOrEmpty()) {
             unprocessedChars = unprocessed.dropLast(1)
             cursor = mainExpr.end
-        } else if (!beginEdit()) {
+        } else if (!beginEdit(selection)) {
             cursor = evaluator.deleteBefore(cursor)
         }
         // Resulting formula won't be announced, since it's empty.
@@ -1056,7 +1113,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
      * @param moreChars characters to be added
      * @param explicit these characters were explicitly typed by the user, not pasted
      */
-    private fun addChars(moreChars: String, explicit: Boolean) {
+    private fun addChars(moreChars: String, explicit: Boolean, selection: IntRange = currentSelection()) {
         val chars = unprocessedChars.orEmpty() + moreChars
         var current = 0
         val len = chars.length
@@ -1065,7 +1122,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         if (currentState == CalculatorState.RESULT && len != 0) {
             switchToInput(KeyMaps.keyForChar(chars[current]))
         } else {
-            beginEdit()
+            beginEdit(selection)
         }
         val groupingSeparator = KeyMaps.translateResult(",")[0]
         val addKey = if (explicit) ::addExplicitKeyToExpr else ::addKeyToExpr
@@ -1145,23 +1202,72 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
      * never has to change any padding; two scrims in the display colour fill the bar areas.
      */
     private fun setupInsets() {
-        var applied: Insets? = null
         mainCalculator.onSystemBarInsets { insets ->
-            // The window re-dispatches unchanged insets whenever a view is added; rebuilding the
-            // scene below lays out every sheet state, so only do it when they really change.
-            if (insets == applied) return@onSystemBarInsets
-            applied = insets
+            // The window re-dispatches unchanged insets whenever a view is added.
+            if (insets == sceneInsets) return@onSystemBarInsets
+            sceneInsets = insets
             mainCalculator.updatePadding(left = insets.left, right = insets.right)
-            SHEET_STATES.forEach { state ->
-                mainCalculator.getConstraintSet(state)?.apply {
-                    setGuidelineBegin(R.id.status_bar_guideline, insets.top)
-                    setGuidelineEnd(R.id.navigation_bar_guideline, insets.bottom)
+            updateSceneGeometry()
+        }
+        // A new size (the first layout, a split screen resizing) refits the scene before the
+        // frame is drawn, so that no frame shows the pads at the wrong size.
+        mainCalculator.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) {
+                mainCalculator.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+                    override fun onPreDraw(): Boolean {
+                        mainCalculator.viewTreeObserver.takeIf { it.isAlive }?.removeOnPreDrawListener(this)
+                        return !updateSceneGeometry()
+                    }
+                })
+            }
+        }
+    }
+
+    /** The system bar insets the scene was last laid out for; see updateSceneGeometry(). */
+    private var sceneInsets = Insets.NONE
+    private var appliedInsets: Insets? = null
+    private var appliedPadsTop = -1
+
+    /**
+     * Fit the scene to the window: the status and navigation bar guidelines go to the insets,
+     * and the top of the pads goes 5/4 of their width above the navigation bar, unless that
+     * would leave the display less than its minimum height, as in a split screen, in which
+     * case the pads get what is left (and, sized by their height, narrower). In the history
+     * states the pads are translated off the bottom of the screen from that same place.
+     * Rebuilding the scene solves every state, so nothing is touched unless something changed;
+     * returns whether it was. (The landscape scene sizes the pads by height and has no
+     * guideline for their top.)
+     */
+    private fun updateSceneGeometry(): Boolean {
+        val insets = sceneInsets
+        val width = mainCalculator.width - mainCalculator.paddingLeft - mainCalculator.paddingRight
+        val height = mainCalculator.height
+        var padsTop = -1
+        if (findViewById<View>(R.id.pads_top_guideline) != null && width > 0 && height > 0) {
+            val padWidth = min(width, resources.getDimensionPixelSize(R.dimen.pad_max_width))
+            val navigationBarTop = height - insets.bottom
+            val displayBottom = insets.top + resources.getDimensionPixelSize(R.dimen.display_min_height)
+            padsTop = max(displayBottom, navigationBarTop - (padWidth * 5 + 2) / 4).coerceAtMost(navigationBarTop)
+        }
+        if (insets == appliedInsets && padsTop == appliedPadsTop) return false
+        appliedInsets = insets
+        appliedPadsTop = padsTop
+        SHEET_STATES.forEach { state ->
+            mainCalculator.getConstraintSet(state)?.apply {
+                setGuidelineBegin(R.id.status_bar_guideline, insets.top)
+                setGuidelineEnd(R.id.navigation_bar_guideline, insets.bottom)
+                if (padsTop >= 0) {
+                    setGuidelineBegin(R.id.pads_top_guideline, padsTop)
+                    val offScreen = if (state in HISTORY_ORIGINS) (height - padsTop).toFloat() else 0f
+                    setTranslationY(R.id.input_pad, offScreen)
+                    setTranslationY(R.id.advanced_pad, offScreen)
                 }
             }
-            // The scene's own sets were edited in place: rebuild it once, then apply the current one.
-            mainCalculator.updateState()
-            mainCalculator.getConstraintSet(mainCalculator.currentState)?.applyTo(mainCalculator)
         }
+        // The scene's own sets were edited in place: rebuild it once, then apply the current one.
+        mainCalculator.updateState()
+        mainCalculator.getConstraintSet(mainCalculator.currentState)?.applyTo(mainCalculator)
+        return true
     }
 
     companion object {
