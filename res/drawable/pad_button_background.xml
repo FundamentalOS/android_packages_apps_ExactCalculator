@@ -6,7 +6,8 @@
 <!--
      A key of the pads: a fully rounded pill (a circle when square) in the key's container
      colour, with a Material state layer on top. Keypad draws one of these per key, resolving
-     the colours from the key's theme overlay.
+     the colours from the key's theme overlay, and sets the corner radius itself: the pill's
+     at rest, half of it while the key is pressed.
 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="@color/pad_button_ripple">

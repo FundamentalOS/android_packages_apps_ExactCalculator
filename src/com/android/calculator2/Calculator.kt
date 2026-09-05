@@ -94,7 +94,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
 
     private val preDrawListener = object : ViewTreeObserver.OnPreDrawListener {
         override fun onPreDraw(): Boolean {
-            formulaContainer.scrollTo(formulaText.right, 0)
+            scrollFormulaToCursor()
             formulaContainer.viewTreeObserver.takeIf { it.isAlive }?.removeOnPreDrawListener(this)
             return false
         }
@@ -109,7 +109,8 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
             val uri = item.uri
             if (uri != null && evaluator.isLastSaved(uri)) {
                 clearIfNotInputState()
-                evaluator.appendExpr(evaluator.savedIndex)
+                beginEdit()
+                cursor = evaluator.insertExpr(evaluator.savedIndex, cursor)
                 redisplayAfterFormulaChange()
             } else {
                 addChars(item.coerceToText(this@Calculator).toString(), false)
@@ -121,7 +122,8 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
             clearIfNotInputState()
             val memoryIndex = evaluator.memoryIndex
             if (memoryIndex != 0L) {
-                evaluator.appendExpr(memoryIndex)
+                beginEdit()
+                cursor = evaluator.insertExpr(memoryIndex, cursor)
                 redisplayAfterFormulaChange()
             }
         }
@@ -160,6 +162,13 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
 
     /** Whether the advanced pad shows the inverse functions; see onInverseToggled(). */
     private var inverseMode = false
+
+    /**
+     * Where the expression is being edited: the formula's cursor, as a position in the main
+     * expression. Taken from the formula when an edit begins (see beginEdit()), moved along
+     * by the edits, and put back into the formula when it is redisplayed.
+     */
+    private var cursor = CalculatorExpr.Position(0, 0)
 
     // Characters that were recently entered at the end of the display that have not yet
     // been added to the underlying expression.
@@ -238,6 +247,8 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         findViewById<View>(R.id.overflow).setOnClickListener { overflowMenu.show() }
         setupInsets()
         modeView = findViewById(R.id.mode)
+        // The toolbar's mode label switches the mode just like the key on the advanced pad.
+        modeView.setOnClickListener { onKey(R.id.toggle_mode) }
         advancedToggle = findViewById(R.id.toggle_advanced)
         advancedToggle.addOnCheckedChangeListener { _, checked -> onAdvancedToggled(checked) }
         historyToggle = findViewById(R.id.toggle_history)
@@ -296,6 +307,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
             evaluator.clearMain()
             onInverseToggled(false)
         }
+        cursor = mainExpr.end
         restoreDisplay()
         // The formula holds focus, so that its cursor blinks; the pads take none.
         formulaText.requestFocus()
@@ -479,7 +491,25 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
 
     override fun onActionModeStarted(mode: ActionMode) {
         super.onActionModeStarted(mode)
-        if (mode.tag == CalculatorFormula.TAG_ACTION_MODE) formulaContainer.scrollTo(formulaText.right, 0)
+        if (mode.tag == CalculatorFormula.TAG_ACTION_MODE) scrollFormulaToCursor()
+    }
+
+    /** Scroll the formula so that its cursor is in view; at the end, that is the right end. */
+    private fun scrollFormulaToCursor() {
+        val layout = formulaText.layout
+        val cursorX = if (layout == null) {
+            formulaText.right
+        } else {
+            val offset = formulaText.selectionEnd.coerceIn(0, formulaText.length())
+            formulaText.left + formulaText.paddingLeft + layout.getPrimaryHorizontal(offset).toInt()
+        }
+        val margin = formulaText.paddingLeft
+        val visibleWidth = formulaContainer.width - formulaContainer.paddingLeft - formulaContainer.paddingRight
+        val scrollX = formulaContainer.scrollX
+        when {
+            cursorX + margin > scrollX + visibleWidth -> formulaContainer.scrollTo(cursorX + margin - visibleWidth, 0)
+            cursorX - margin < scrollX -> formulaContainer.scrollTo(cursorX - margin, 0)
+        }
     }
 
     /**
@@ -569,7 +599,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
      */
     private fun onModeChanged(degreeMode: Boolean) {
         modeView.setText(if (degreeMode) R.string.mode_deg else R.string.mode_rad)
-        modeView.contentDescription = getString(if (degreeMode) R.string.desc_mode_deg else R.string.desc_mode_rad)
+        modeView.contentDescription = getString(if (degreeMode) R.string.desc_switch_rad else R.string.desc_switch_deg)
 
         advancedPad.setKeyLabel(R.id.toggle_mode, getString(if (degreeMode) R.string.mode_rad else R.string.mode_deg))
         advancedPad.setKeyContentDescription(
@@ -588,10 +618,30 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
             announceClearedForAccessibility()
             evaluator.clearMain()
         }
+        cursor = mainExpr.end
         setState(CalculatorState.INPUT)
     }
 
-    // Add the given button id to input expression.
+    /**
+     * Start an edit where the formula's cursor is. Text the user selected is deleted first, as
+     * typing over a selection does. Characters that could not be processed only ever sit at
+     * the end, so while there are any the cursor is the end.
+     * @return whether a selection was deleted
+     */
+    private fun beginEdit(): Boolean {
+        val start = minOf(formulaText.selectionStart, formulaText.selectionEnd)
+        val end = maxOf(formulaText.selectionStart, formulaText.selectionEnd)
+        if (haveUnprocessed() || start < 0) {
+            cursor = mainExpr.end
+            return false
+        }
+        cursor = mainExpr.positionOf(this, end)
+        if (start == end) return false
+        cursor = evaluator.deleteRange(mainExpr.positionOf(this, start), cursor)
+        return true
+    }
+
+    // Insert the given button id into the input expression at the cursor.
     // If appropriate, clear the expression before doing so.
     private fun addKeyToExpr(id: Int) {
         when (currentState) {
@@ -600,16 +650,18 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
             else -> {}
         }
         // TODO: Some user visible feedback when the key is rejected?
-        evaluator.append(id)
+        cursor = evaluator.insert(id, cursor) ?: cursor
     }
 
     /**
-     * Add the given button id to input expression, assuming it was explicitly
+     * Insert the given button id into the input expression, assuming it was explicitly
      * typed/touched.
      * We perform slightly more aggressive correction than in pasted expressions.
      */
     private fun addExplicitKeyToExpr(id: Int) {
-        if (currentState == CalculatorState.INPUT && id == R.id.op_sub) mainExpr.removeTrailingAdditiveOperators()
+        if (currentState == CalculatorState.INPUT && id == R.id.op_sub) {
+            cursor = mainExpr.removeAdditiveOperatorsBefore(cursor)
+        }
         addKeyToExpr(id)
     }
 
@@ -661,19 +713,21 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
                 // In input mode, we reinterpret already entered trig functions.
                 // The mode labels follow degreeModeFlow.
                 evaluator.setDegreeMode(mode)
+                cursor = mainExpr.end
                 setState(CalculatorState.INPUT)
                 resultText.clear()
                 if (!haveUnprocessed()) evaluateInstantIfNecessary()
             }
             R.id.paren -> {
-                // If we just added a function or left paren, add another.
-                // If we don't have any open parentheses, add a left one.
-                // If we end with a digit, symbolic constant, right parenthesis, or suffix
+                // If the cursor follows a function or left paren, add another.
+                // If there are no open parentheses before it, add a left one.
+                // If it follows a digit, symbolic constant, right parenthesis, or suffix
                 // operator, add a right one.
-                // If we end with an operator, add a left one.
+                // If it follows an operator, add a left one.
+                beginEdit()
                 val closes = mainExpr.run {
-                    !hasTrailingLeftParen() && hasOpenParentheses() &&
-                        (hasTrailingRightParen() || hasTrailingConstant() || hasTrailingSuffix())
+                    !hasLeftParenBefore(cursor) && hasOpenParenthesesBefore(cursor) &&
+                        (hasRightParenBefore(cursor) || hasConstantBefore(cursor) || hasSuffixBefore(cursor))
                 }
                 addExplicitKeyToExpr(if (closes) R.id.rparen else R.id.lparen)
                 redisplayAfterFormulaChange()
@@ -685,6 +739,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
                     // This may actually be useful for a left parenthesis.
                     addChars(KeyMaps.toString(this, id), true)
                 } else {
+                    beginEdit()
                     addExplicitKeyToExpr(id)
                     redisplayAfterFormulaChange()
                 }
@@ -694,9 +749,12 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
 
     private fun redisplayFormula() {
         val formula = mainExpr.toSpannableStringBuilder(this)
+        // The cursor goes where the last edit left it; characters that could not be processed
+        // follow the expression, so with any of those it can only be at the end.
+        val caret = if (haveUnprocessed()) -1 else mainExpr.displayOffsetOf(this, cursor)
         // Add and highlight characters we couldn't process.
         unprocessedChars?.let { formula.append(it, unprocessedColorSpan, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) }
-        formulaText.changeTextTo(formula)
+        formulaText.changeTextTo(formula, if (caret < 0) formula.length else caret)
         formulaText.contentDescription = if (TextUtils.isEmpty(formula)) getString(R.string.desc_formula) else null
     }
 
@@ -780,9 +838,9 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
     }
 
     private fun onDelete() {
-        // Delete works like backspace; remove the last character or operator from the expression.
-        // Note that we handle keyboard delete exactly like the delete button.  For
-        // example the delete button can be used to delete a character from an incomplete
+        // Delete works like backspace; remove the character or operator before the cursor, or
+        // the selection. Note that we handle keyboard delete exactly like the delete button.
+        // For example the delete button can be used to delete a character from an incomplete
         // function name typed on a physical keyboard.
         // This should be impossible in RESULT state.
         // If there is an in-progress explicit evaluation, just cancel it and return.
@@ -791,8 +849,9 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         val unprocessed = unprocessedChars
         if (!unprocessed.isNullOrEmpty()) {
             unprocessedChars = unprocessed.dropLast(1)
-        } else {
-            evaluator.delete()
+            cursor = mainExpr.end
+        } else if (!beginEdit()) {
+            cursor = evaluator.deleteBefore(cursor)
         }
         // Resulting formula won't be announced, since it's empty.
         if (mainExpr.isEmpty() && !haveUnprocessed()) announceClearedForAccessibility()
@@ -806,6 +865,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         unprocessedChars = null
         resultText.clear()
         evaluator.clearMain()
+        cursor = mainExpr.end
         setState(CalculatorState.INPUT)
         redisplayFormula()
     }
@@ -1002,7 +1062,11 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         val len = chars.length
         var lastWasDigit = false
         // Clear display immediately for incomplete function name.
-        if (currentState == CalculatorState.RESULT && len != 0) switchToInput(KeyMaps.keyForChar(chars[current]))
+        if (currentState == CalculatorState.RESULT && len != 0) {
+            switchToInput(KeyMaps.keyForChar(chars[current]))
+        } else {
+            beginEdit()
+        }
         val groupingSeparator = KeyMaps.translateResult(",")[0]
         val addKey = if (explicit) ::addExplicitKeyToExpr else ::addKeyToExpr
         while (current < len) {
@@ -1018,14 +1082,14 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
                     // Process scientific notation with 'E' when pasting, in spite of ambiguity
                     // with base of natural log.
                     // Otherwise the 10^x key is the user's friend.
-                    evaluator.addExponent(chars, current, expEnd)
+                    cursor = evaluator.addExponent(chars, current, expEnd, cursor)
                     current = expEnd
                     lastWasDigit = false
                     continue
                 }
                 val isDigit = KeyMaps.digVal(k) != KeyMaps.NOT_DIGIT
-                if (current == 0 && (isDigit || k == R.id.dec_point) && mainExpr.hasTrailingConstant()) {
-                    // Refuse to concatenate pasted content to trailing constant.
+                if (current == 0 && (isDigit || k == R.id.dec_point) && mainExpr.hasConstantBefore(cursor)) {
+                    // Refuse to concatenate pasted content to the constant before the cursor.
                     // This makes pasting of calculator results more consistent, whether or
                     // not the old calculator instance is still around.
                     addKeyToExpr(R.id.op_mul)
@@ -1058,6 +1122,7 @@ class Calculator : AppCompatActivity(), OnTextSizeChangeListener, AlertDialogFra
         if (currentState == CalculatorState.ERROR || currentState == CalculatorState.RESULT) {
             setState(CalculatorState.INPUT)
             evaluator.clearMain()
+            cursor = mainExpr.end
         }
     }
 

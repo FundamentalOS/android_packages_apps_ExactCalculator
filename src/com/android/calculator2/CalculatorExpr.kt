@@ -161,32 +161,75 @@ class CalculatorExpr() {
             exponent = exp
         }
 
+        val isEmpty: Boolean get() = !sawDecimal && whole.isEmpty()
+
         /**
-         * Undo the last add or remove last exponent digit.
-         * Assumes the constant is nonempty.
+         * The constant as typed, without digit grouping: the characters that edit positions
+         * count. Not internationalized.
          */
-        fun delete() = when {
-            // Once zero, it can only be added back with addExponent.
-            exponent != 0 -> exponent /= 10
-            fraction.isNotEmpty() -> fraction = fraction.dropLast(1)
-            sawDecimal -> sawDecimal = false
-            else -> whole = whole.dropLast(1)
+        fun modelString(): String = buildString {
+            append(whole)
+            if (sawDecimal) append('.').append(fraction)
+            if (exponent != 0) append('E').append(exponent)
         }
 
-        val isEmpty: Boolean get() = !sawDecimal && whole.isEmpty()
+        /** The number of characters in [modelString]. */
+        val length: Int
+            get() = whole.length +
+                (if (sawDecimal) 1 + fraction.length else 0) +
+                (if (exponent != 0) 1 + exponent.toString().length else 0)
+
+        /**
+         * The constant as shown, before internationalization: [modelString] with digit
+         * grouping separators, as commas, in the whole number. Only the separators differ, so
+         * the two map onto each other character by character.
+         */
+        fun displayString(): String = buildString {
+            append(if (exponent != 0) whole else whole.addCommas(0, whole.length))
+            if (sawDecimal) append('.').append(fraction)
+            if (exponent != 0) append('E').append(exponent)
+        }
+
+        /**
+         * This constant with the key's character inserted at [offset] of [modelString], or
+         * null if that would not be a constant: a second decimal point, or one in an exponent.
+         */
+        fun inserting(offset: Int, id: Int): Constant? {
+            if (id == R.id.dec_point && (sawDecimal || exponent != 0)) return null
+            val c = if (id == R.id.dec_point) '.' else '0' + KeyMaps.digVal(id)
+            return parse(StringBuilder(modelString()).insert(offset, c).toString())
+        }
+
+        /**
+         * This constant with the character at [offset] of [modelString] removed: null if
+         * nothing is left, this constant itself if what is left is not a constant (as when
+         * the marker of an exponent goes but its sign stays), in which case nothing is deleted.
+         */
+        fun deleting(offset: Int): Constant? {
+            val model = modelString().removeRange(offset, offset + 1)
+            return if (model.isEmpty()) null else parse(model) ?: this
+        }
+
+        /**
+         * This constant split at [offset] of [modelString], either part possibly being nothing;
+         * or null if it cannot be split there, as inside an exponent.
+         */
+        fun split(offset: Int): Pair<Constant?, Constant?>? {
+            val model = modelString()
+            val head = model.take(offset)
+            val tail = model.drop(offset)
+            val headConstant = parse(head)
+            val tailConstant = parse(tail)
+            if (head.isNotEmpty() && headConstant == null || tail.isNotEmpty() && tailConstant == null) return null
+            return headConstant to tailConstant
+        }
 
         /**
          * Produce human-readable string representation of constant, as typed.
          * We do add digit grouping separators to the whole number, even if not typed.
          * Result is internationalized.
          */
-        override fun toString(): String = KeyMaps.translateResult(
-            buildString {
-                append(if (exponent != 0) whole else whole.addCommas(0, whole.length))
-                if (sawDecimal) append('.').append(fraction)
-                if (exponent != 0) append('E').append(exponent)
-            }
-        )
+        override fun toString(): String = KeyMaps.translateResult(displayString())
 
         /**
          * Return BoundedRational representation of constant, if well-formed.
@@ -212,6 +255,30 @@ class CalculatorExpr() {
         companion object {
             private const val SAW_DECIMAL = 0x1
             private const val HAS_EXPONENT = 0x2
+
+            /** Digits, at most one decimal point, and an optional exponent. */
+            private val MODEL = Regex("(\\d*)(\\.(\\d*))?(?:E(-?\\d*))?")
+
+            /**
+             * The constant a model string describes, or null if it is not one, or is empty.
+             * An exponent that is too large is refused; an exponent marker left without digits
+             * is dropped, as deleting the digits of an exponent always has.
+             */
+            fun parse(model: String): Constant? {
+                val match = MODEL.matchEntire(model) ?: return null
+                val whole = match.groupValues[1]
+                val sawDecimal = match.groupValues[2].isNotEmpty()
+                val fraction = match.groupValues[3]
+                val exponentDigits = match.groupValues[4]
+                val exponent = when {
+                    exponentDigits.isEmpty() || exponentDigits == "-" -> 0
+                    else -> exponentDigits.toIntOrNull()?.takeIf { abs(it) <= MAX_EXPONENT } ?: return null
+                }
+                if (!sawDecimal && whole.isEmpty()) return null
+                return Constant(whole, fraction, sawDecimal, exponent)
+            }
+
+            private const val MAX_EXPONENT = 10000
         }
     }
 
@@ -278,40 +345,259 @@ class CalculatorExpr() {
     fun toBytes(): ByteArray =
         ByteArrayOutputStream().also { DataOutputStream(it).use(::write) }.toByteArray()
 
-    private val lastToken: Token? get() = expr.lastOrNull()
-
-    private val lastOperator: Operator? get() = lastToken as? Operator
-
     /**
-     * Does this expression end with a numeric constant?
-     * As opposed to an operator or preevaluated expression.
+     * A place where the expression can be edited: before token [token], or, if [offset] is
+     * not zero, [offset] characters into the constant token [token]. Positions are kept
+     * normalised, so that the end of a constant is expressed as the start of the token after
+     * it, and [end] is `Position(size, 0)`. Characters are those of the tokens' model
+     * strings, i.e. constants as typed, without digit grouping; operators and pre-evaluated
+     * results are indivisible.
      */
-    fun hasTrailingConstant(): Boolean = when (val t = lastToken) {
+    data class Position(val token: Int, val offset: Int) : Comparable<Position> {
+        override fun compareTo(other: Position) = compareValuesBy(this, other, { it.token }, { it.offset })
+    }
+
+    /** The position after the last token. */
+    val end: Position get() = Position(expr.size, 0)
+
+    private fun normalised(token: Int, offset: Int): Position {
+        val t = expr.getOrNull(token)
+        return when {
+            t is Constant && offset >= t.length -> Position(token + 1, 0)
+            t is Constant && offset > 0 -> Position(token, offset)
+            else -> Position(token.coerceIn(0, expr.size), 0)
+        }
+    }
+
+    private fun normalised(position: Position) = normalised(position.token, position.offset)
+
+    /** The token just before the position: the constant it is in, or the previous token. */
+    private fun tokenBefore(at: Position): Token? =
+        if (at.offset > 0) expr.getOrNull(at.token) else expr.getOrNull(at.token - 1)
+
+    private fun operatorBefore(at: Position) = tokenBefore(at) as? Operator
+
+    /** Is what precedes the position a numeric constant, as opposed to an operator or a pre-evaluated result? */
+    fun hasConstantBefore(at: Position): Boolean = when (val t = tokenBefore(at)) {
         is Constant -> true
         is Operator -> t.id == R.id.const_pi || t.id == R.id.const_e
         else -> false
     }
 
-    /** Does this expression end with a binary operator? */
-    fun hasTrailingBinary() = lastOperator?.let { KeyMaps.isBinary(it.id) } == true
+    fun hasBinaryBefore(at: Position) = operatorBefore(at)?.let { KeyMaps.isBinary(it.id) } == true
 
-    /** Does this expression end with a suffix operator? */
-    fun hasTrailingSuffix() = lastOperator?.let { KeyMaps.isSuffix(it.id) } == true
+    fun hasSuffixBefore(at: Position) = operatorBefore(at)?.let { KeyMaps.isSuffix(it.id) } == true
 
-    /** Does this expression contain an unmatched lparen? */
-    fun hasOpenParentheses(): Boolean {
-        val operators = expr.filterIsInstance<Operator>()
+    fun hasLeftParenBefore(at: Position) =
+        operatorBefore(at)?.let { it.id == R.id.lparen || KeyMaps.isFunc(it.id) } == true
+
+    fun hasRightParenBefore(at: Position) = operatorBefore(at)?.id == R.id.rparen
+
+    /** Is there an unmatched lparen before the position? */
+    fun hasOpenParenthesesBefore(at: Position): Boolean {
+        val operators = expr.take(at.token).filterIsInstance<Operator>()
         val opens = operators.count { it.id == R.id.lparen || KeyMaps.isFunc(it.id) }
         val closes = operators.count { it.id == R.id.rparen }
         return opens > closes
     }
 
+    /**
+     * Does this expression end with a numeric constant?
+     * As opposed to an operator or preevaluated expression.
+     */
+    fun hasTrailingConstant() = hasConstantBefore(end)
+
+    /** Does this expression end with a binary operator? */
+    fun hasTrailingBinary() = hasBinaryBefore(end)
+
+    /** Does this expression end with a suffix operator? */
+    fun hasTrailingSuffix() = hasSuffixBefore(end)
+
+    /** Does this expression contain an unmatched lparen? */
+    fun hasOpenParentheses() = hasOpenParenthesesBefore(end)
+
     /** Does this expression end with a left parenthesis? */
-    fun hasTrailingLeftParen() =
-        lastOperator?.let { it.id == R.id.lparen || KeyMaps.isFunc(it.id) } == true
+    fun hasTrailingLeftParen() = hasLeftParenBefore(end)
 
     /** Does this expression end with a right parenthesis? */
-    fun hasTrailingRightParen() = lastOperator?.id == R.id.rparen
+    fun hasTrailingRightParen() = hasRightParenBefore(end)
+
+    /**
+     * Insert the press of the key with the given id at [at]. Returns the position after what
+     * was inserted, or null if the insertion was refused because it would clearly make a
+     * syntax error, in which case the expression is unchanged. As one adjustment, a binary
+     * operator inserted right after another one replaces it, unless it is a minus, which is
+     * allowed as a unary minus.
+     */
+    fun insert(id: Int, at: Position): Position? {
+        val pos = normalised(at)
+        return if (KeyMaps.digVal(id) != KeyMaps.NOT_DIGIT || id == R.id.dec_point) {
+            insertDigit(id, pos)
+        } else {
+            insertOperator(id, pos)
+        }
+    }
+
+    private fun insertDigit(id: Int, pos: Position): Position? {
+        if (pos.offset > 0) {
+            // Inside a constant.
+            val edited = (expr[pos.token] as Constant).inserting(pos.offset, id) ?: return null
+            expr[pos.token] = edited
+            return normalised(pos.token, pos.offset + 1)
+        }
+        val previous = expr.getOrNull(pos.token - 1)
+        if (previous is Constant) {
+            val edited = previous.inserting(previous.length, id) ?: return null
+            expr[pos.token - 1] = edited
+            return Position(pos.token, 0)
+        }
+        val next = expr.getOrNull(pos.token)
+        if (next is Constant) {
+            val edited = next.inserting(0, id) ?: return null
+            expr[pos.token] = edited
+            return normalised(pos.token, 1)
+        }
+        // A new constant. Juxtaposition means multiplication; next to a pre-evaluated result
+        // that is made explicit, since the result would otherwise read as part of the constant.
+        val constant = Constant.parse(if (id == R.id.dec_point) "." else KeyMaps.digVal(id).toString()) ?: return null
+        var index = pos.token
+        if (previous is PreEval) expr.add(index++, Operator(R.id.op_mul))
+        expr.add(index++, constant)
+        if (next is PreEval) expr.add(index, Operator(R.id.op_mul))
+        return Position(index, 0)
+    }
+
+    private fun insertOperator(id: Int, pos: Position): Position? {
+        var index = pos.token
+        if (pos.offset == 0 && KeyMaps.isBinary(id) && !KeyMaps.isPrefix(id)) {
+            val previousOp = (expr.getOrNull(index - 1) as? Operator)?.id ?: 0
+            if (index == 0 || previousOp == R.id.lparen || KeyMaps.isFunc(previousOp) ||
+                KeyMaps.isPrefix(previousOp) && previousOp != R.id.op_sub
+            ) {
+                return null
+            }
+            // Quietly replace the binary operators before it.
+            while (index > 0 && (expr[index - 1] as? Operator)?.let { KeyMaps.isBinary(it.id) } == true) {
+                expr.removeAt(--index)
+            }
+        }
+        if (pos.offset > 0) {
+            // Inside a constant, which is split around the operator.
+            val (head, tail) = (expr[index] as Constant).split(pos.offset) ?: return null
+            expr.removeAt(index)
+            tail?.let { expr.add(index, it) }
+            head?.let { expr.add(index++, it) }
+        }
+        expr.add(index, Operator(id))
+        return Position(index + 1, 0)
+    }
+
+    /**
+     * Delete the character before [at]: a digit, or a whole operator or pre-evaluated result.
+     * Returns the position of what was deleted. Two constants left adjacent become one.
+     */
+    fun deleteBefore(at: Position): Position {
+        val pos = normalised(at)
+        if (pos.offset > 0) return deleteInConstant(pos.token, pos.offset - 1)
+        if (pos.token == 0) return pos
+        val index = pos.token - 1
+        val previous = expr[index]
+        if (previous is Constant) return deleteInConstant(index, previous.length - 1)
+        expr.removeAt(index)
+        val before = expr.getOrNull(index - 1) as? Constant
+        val after = expr.getOrNull(index) as? Constant
+        if (before != null && after != null) {
+            Constant.parse(before.modelString() + after.modelString())?.let { merged ->
+                expr[index - 1] = merged
+                expr.removeAt(index)
+                return normalised(index - 1, before.length)
+            }
+        }
+        return Position(index, 0)
+    }
+
+    private fun deleteInConstant(index: Int, offset: Int): Position {
+        val constant = expr[index] as Constant
+        val edited = constant.deleting(offset)
+        if (edited == null) {
+            expr.removeAt(index)
+            return Position(index, 0)
+        }
+        if (edited === constant) return normalised(index, offset + 1) // Refused: nothing changes.
+        expr[index] = edited
+        return normalised(index, offset)
+    }
+
+    /** Delete everything between the two positions; returns where that was. */
+    fun deleteRange(from: Position, to: Position): Position {
+        val start = normalised(from)
+        var pos = normalised(to)
+        while (pos > start) {
+            val next = deleteBefore(pos)
+            if (next == pos) break
+            pos = next
+        }
+        return pos
+    }
+
+    /** Remove the op_add and op_sub operators just before [at]; returns the position again. */
+    fun removeAdditiveOperatorsBefore(at: Position): Position {
+        var pos = normalised(at)
+        while (operatorBefore(pos)?.id.let { it == R.id.op_add || it == R.id.op_sub }) {
+            expr.removeAt(pos.token - 1)
+            pos = Position(pos.token - 1, 0)
+        }
+        return pos
+    }
+
+    /**
+     * Insert the contents of the argument expression at [at]; returns the position after it.
+     * It is assumed that the argument expression will not change, and thus its pieces can be
+     * reused directly.
+     */
+    fun insertExpr(expr2: CalculatorExpr, at: Position): Position {
+        val tokens = expr2.expr
+        if (tokens.isEmpty()) return normalised(at)
+        var index = boundaryAt(normalised(at))
+        // Check that we're not concatenating Constant or PreEval tokens, since the result would
+        // look like a single constant, with very mysterious results for the user.
+        // Fudge it by adding an explicit multiplication.  We would have interpreted it as
+        // such anyway, and this makes it recognizable to the user.
+        if (expr.getOrNull(index - 1).let { it != null && it !is Operator } && tokens.first() !is Operator) {
+            expr.add(index++, Operator(R.id.op_mul))
+        }
+        expr.addAll(index, tokens)
+        index += tokens.size
+        if (tokens.last() !is Operator && expr.getOrNull(index).let { it != null && it !is Operator }) {
+            expr.add(index, Operator(R.id.op_mul))
+        }
+        return Position(index, 0)
+    }
+
+    /**
+     * The token index of the position, splitting the constant it is inside if it is; where
+     * that constant cannot be split, the boundary after it.
+     */
+    private fun boundaryAt(pos: Position): Int {
+        if (pos.offset == 0) return pos.token
+        var index = pos.token
+        val (head, tail) = (expr[index] as Constant).split(pos.offset) ?: return index + 1
+        expr.removeAt(index)
+        tail?.let { expr.add(index, it) }
+        head?.let { expr.add(index++, it) }
+        return index
+    }
+
+    /**
+     * Add an exponent to the constant that precedes [at], or that the position is inside.
+     * Returns the position after that constant. Assumes there is such a constant.
+     */
+    fun addExponentBefore(at: Position, exp: Int): Position {
+        val pos = normalised(at)
+        val index = if (pos.offset > 0) pos.token else pos.token - 1
+        (expr[index] as Constant).addExponent(exp)
+        return Position(index + 1, 0)
+    }
 
     /**
      * Append press of button with given id to expression.
@@ -320,61 +606,26 @@ class CalculatorExpr() {
      * for unambiguous consecutive binary operators, in which case we delete the first
      * operator.
      */
-    fun add(id: Int): Boolean {
-        // Quietly replace a trailing binary operator with another one, unless the second
-        // operator is minus, in which case we just allow it as a unary minus.
-        if (KeyMaps.isBinary(id) && !KeyMaps.isPrefix(id)) {
-            val lastOp = lastOperator?.id ?: 0
-            if (expr.isEmpty() || lastOp == R.id.lparen || KeyMaps.isFunc(lastOp) ||
-                KeyMaps.isPrefix(lastOp) && lastOp != R.id.op_sub
-            ) {
-                return false
-            }
-            while (hasTrailingBinary()) delete()
-        }
-        if (KeyMaps.digVal(id) == KeyMaps.NOT_DIGIT && id != R.id.dec_point) {
-            expr.add(Operator(id))
-            return true
-        }
-        // Since we treat juxtaposition as multiplication, a constant can appear anywhere.
-        val last = lastToken
-        if (last !is Constant) {
-            // Add explicit multiplication to avoid confusing display.
-            if (last is PreEval) expr.add(Operator(R.id.op_mul))
-            expr.add(Constant())
-        }
-        return (expr.last() as Constant).add(id)
-    }
+    fun add(id: Int): Boolean = insert(id, end) != null
 
     /**
      * Add exponent to the constant at the end of the expression.
      * Assumes there is a constant at the end of the expression.
      */
-    fun addExponent(exp: Int) = (expr.last() as Constant).addExponent(exp)
+    fun addExponent(exp: Int) {
+        addExponentBefore(end, exp)
+    }
 
     /**
      * Remove trailing op_add and op_sub operators.
      */
     fun removeTrailingAdditiveOperators() {
-        while (lastOperator?.id.let { it == R.id.op_add || it == R.id.op_sub }) delete()
+        removeAdditiveOperatorsBefore(end)
     }
 
-    /**
-     * Append the contents of the argument expression.
-     * It is assumed that the argument expression will not change, and thus its pieces can be
-     * reused directly.
-     */
+    /** Append the contents of the argument expression; see [insertExpr]. */
     fun append(expr2: CalculatorExpr) {
-        // Check that we're not concatenating Constant or PreEval tokens, since the result would
-        // look like a single constant, with very mysterious results for the user.
-        // Fudge it by adding an explicit multiplication.  We would have interpreted it as
-        // such anyway, and this makes it recognizable to the user.
-        if (lastToken.let { it != null && it !is Operator } &&
-            expr2.expr.firstOrNull().let { it != null && it !is Operator }
-        ) {
-            expr.add(Operator(R.id.op_mul))
-        }
-        expr.addAll(expr2.expr)
+        insertExpr(expr2, end)
     }
 
     /**
@@ -382,12 +633,54 @@ class CalculatorExpr() {
      * Or possibly remove a trailing exponent digit.
      */
     fun delete() {
-        val last = lastToken ?: return
-        if (last is Constant) {
-            last.delete()
-            if (!last.isEmpty) return
+        deleteBefore(end)
+    }
+
+    /**
+     * The position that [displayOffset] characters into the displayed formula (as produced
+     * by [toSpannableStringBuilder]) corresponds to. Offsets inside an operator or a
+     * pre-evaluated result snap to whichever of its ends is nearer.
+     */
+    fun positionOf(context: Context, displayOffset: Int): Position {
+        var display = 0
+        for ((index, token) in expr.withIndex()) {
+            if (token is Constant) {
+                val shown = token.displayString()
+                if (displayOffset <= display + shown.length) {
+                    // Grouping separators are shown but not counted.
+                    val model = shown.take(displayOffset - display).count { it != ',' }
+                    return normalised(index, model)
+                }
+                display += shown.length
+            } else {
+                val length = token.toCharSequence(context).length
+                if (displayOffset < display + length) {
+                    return Position(if ((displayOffset - display) * 2 <= length) index else index + 1, 0)
+                }
+                display += length
+            }
         }
-        expr.removeAt(expr.size - 1)
+        return end
+    }
+
+    /** The offset into the displayed formula that [position] corresponds to. */
+    fun displayOffsetOf(context: Context, position: Position): Int {
+        var display = 0
+        for ((index, token) in expr.withIndex()) {
+            if (index == position.token) {
+                if (position.offset == 0 || token !is Constant) return display
+                val shown = token.displayString()
+                var model = 0
+                var i = 0
+                while (i < shown.length && model < position.offset) {
+                    if (shown[i] != ',') model++
+                    i++
+                }
+                return display + i
+            }
+            display += if (token is Constant) token.displayString().length else token.toCharSequence(context).length
+        }
+        return display
     }
 
     /** Remove all tokens from the expression. */

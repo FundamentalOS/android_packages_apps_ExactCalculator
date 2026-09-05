@@ -921,27 +921,31 @@ class Evaluator private constructor(
     }
 
     /**
-     * Append a button press to the main expression.
+     * Insert a button press into the main expression at [at]; see CalculatorExpr.insert().
      * @param id Button identifier for the character or operator to be added.
-     * @return false if we rejected the insertion due to obvious syntax issues, and the expression
-     * is unchanged; true otherwise
+     * @return the position after what was inserted, or null if we rejected the insertion due to
+     * obvious syntax issues, and the expression is unchanged
      */
-    fun append(id: Int): Boolean {
-        if (id == R.id.fun_10pow) {
-            add10pow() // Handled as macro expansion.
-            return true
-        }
+    fun insert(id: Int, at: CalculatorExpr.Position): CalculatorExpr.Position? {
+        if (id == R.id.fun_10pow) return insert10pow(at) // Handled as macro expansion.
         changedValue = changedValue || !KeyMaps.isBinary(id)
-        return mainExpr.expr.add(id)
+        return mainExpr.expr.insert(id, at)
     }
 
-    /**
-     * Delete last token from main expression.
-     */
-    fun delete() {
+    /** Delete the character or token before [at] in the main expression; see CalculatorExpr.deleteBefore(). */
+    fun deleteBefore(at: CalculatorExpr.Position): CalculatorExpr.Position {
         changedValue = true
-        mainExpr.expr.delete()
+        val position = mainExpr.expr.deleteBefore(at)
         if (mainExpr.expr.isEmpty()) mainExpr.longTimeout = false
+        return position
+    }
+
+    /** Delete everything between the two positions of the main expression. */
+    fun deleteRange(from: CalculatorExpr.Position, to: CalculatorExpr.Position): CalculatorExpr.Position {
+        changedValue = true
+        val position = mainExpr.expr.deleteRange(from, to)
+        if (mainExpr.expr.isEmpty()) mainExpr.longTimeout = false
+        return position
     }
 
     /**
@@ -1212,22 +1216,21 @@ class Evaluator private constructor(
     /**
      * Append the expression at index as a pre-evaluated expression to the main expression.
      */
-    fun appendExpr(index: Long) {
+    fun insertExpr(index: Long, at: CalculatorExpr.Position): CalculatorExpr.Position {
         changedValue = true
         mainExpr.longTimeout = mainExpr.longTimeout || exprInfo(index).longTimeout
-        getCollapsedExpr(index)?.let(mainExpr.expr::append)
+        return getCollapsedExpr(index)?.let { mainExpr.expr.insertExpr(it, at) } ?: at
     }
 
     /**
-     * Add the power of 10 operator to the main expression.
+     * Insert the power of 10 operator into the main expression.
      * This is treated essentially as a macro expansion.
      */
-    private fun add10pow() {
+    private fun insert10pow(at: CalculatorExpr.Position): CalculatorExpr.Position {
         changedValue = true // For consistency.  Reevaluation is probably not useful.
-        mainExpr.expr.apply {
-            append(CalculatorExpr().apply { add(R.id.digit_1); add(R.id.digit_0) })
-            add(R.id.op_pow)
-        }
+        val ten = CalculatorExpr().apply { add(R.id.digit_1); add(R.id.digit_0) }
+        val afterTen = mainExpr.expr.insertExpr(ten, at)
+        return mainExpr.expr.insert(R.id.op_pow, afterTen) ?: afterTen
     }
 
     /**
@@ -1274,14 +1277,14 @@ class Evaluator private constructor(
      * The end of the current expression must be a constant.  Exponents have the same syntax as
      * for exponentEnd().
      */
-    fun addExponent(s: String, begin: Int, end: Int) {
+    fun addExponent(s: String, begin: Int, end: Int, at: CalculatorExpr.Position): CalculatorExpr.Position {
         // We do the decimal conversion ourselves to exactly match exponentEnd() conventions
         // and handle various kinds of digits on input.  Also avoids allocation.
         val negative = KeyMaps.keyForChar(s[begin + 1]) == R.id.op_sub
         val digitsStart = begin + if (negative) 2 else 1
         val exp = (digitsStart until end).fold(0) { acc, i -> 10 * acc + Character.digit(s[i], 10) }
-        mainExpr.expr.addExponent(if (negative) -exp else exp)
         changedValue = true
+        return mainExpr.expr.addExponentBefore(at, if (negative) -exp else exp)
     }
 
     /**

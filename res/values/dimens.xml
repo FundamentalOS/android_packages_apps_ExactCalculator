@@ -55,7 +55,13 @@
     <dimen name="toolbar_icon_button_gap">8dp</dimen>
     <dimen name="toolbar_overflow_margin_end">4dp</dimen>
     <!-- The overflow button's 12dp padding completes the 24dp gap to the mode indicator. -->
-    <dimen name="toolbar_mode_margin_end">12dp</dimen>
+    <!-- The toolbar's buttons, the mode label included, are this big; their ripple is the
+         disc inset in toolbar_toggle_background. -->
+    <dimen name="toolbar_button_size">48dp</dimen>
+    <!-- Centred in its 48dp, a three-letter mode label ends about 6dp inside it; with this
+         margin and the 12dp between the overflow icon and the edge of its button, the label
+         and the icon are 24dp apart. -->
+    <dimen name="toolbar_mode_margin_end">6dp</dimen>
 
     <!-- The overflow menu popup. -->
     <dimen name="overflow_menu_shadow">8dp</dimen>

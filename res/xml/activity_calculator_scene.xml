@@ -37,7 +37,7 @@
         android:id="@+id/transition_basic_history"
         motion:constraintSetEnd="@+id/state_history"
         motion:constraintSetStart="@id/state_basic"
-        motion:duration="1000"
+        motion:duration="@integer/history_duration"
         motion:layoutDuringTransition="ignoreRequest"
         motion:motionInterpolator="@interpolator/standard">
         <OnSwipe
@@ -51,7 +51,7 @@
         android:id="@+id/transition_advanced_history"
         motion:constraintSetEnd="@+id/state_history_advanced"
         motion:constraintSetStart="@id/state_advanced"
-        motion:duration="1000"
+        motion:duration="@integer/history_duration"
         motion:layoutDuringTransition="ignoreRequest"
         motion:motionInterpolator="@interpolator/standard">
         <OnSwipe

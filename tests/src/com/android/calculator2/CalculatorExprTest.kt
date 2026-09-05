@@ -8,6 +8,7 @@ package com.android.calculator2
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -453,5 +454,102 @@ class CalculatorExprTest {
         assertThrows(CalculatorExpr.SyntaxException::class.java) {
             restored.eval(false, FakeResolver())
         }
+    }
+
+    // ---- Editing at a position ----
+
+    private fun pos(token: Int, offset: Int = 0) = CalculatorExpr.Position(token, offset)
+
+    private fun assertValue(expected: Long, e: CalculatorExpr) {
+        val actual = e.eval(false, FakeResolver())
+        assertTrue("expected $expected, got $actual", UnifiedReal(expected).definitelyEquals(actual))
+    }
+
+    @Test
+    fun insertsDigitsAtPositions() {
+        val e = expr("12+34")
+        assertEquals(pos(0, 2), e.insert(KeyMaps.keyForDigVal(5), pos(0, 1))) // 152+34
+        assertValue(186, e)
+        assertEquals(pos(2, 1), e.insert(KeyMaps.keyForDigVal(5), pos(2))) // 152+534: before a constant
+        assertValue(686, e)
+        assertEquals(pos(3), e.insert(KeyMaps.keyForDigVal(5), pos(3))) // 152+5345: after a constant
+        assertValue(5497, e)
+        assertEquals(pos(0, 1), e.insert(KeyMaps.keyForDigVal(9), pos(0))) // 9152+5345
+        assertValue(14497, e)
+    }
+
+    @Test
+    fun anOperatorSplitsTheConstantItIsInsertedInto() {
+        val e = expr("1234")
+        assertEquals(pos(2), e.insert(R.id.op_add, pos(0, 2))) // 12+34
+        assertValue(46, e)
+        assertTrue(e.hasConstantBefore(pos(1)))
+        assertTrue(e.hasBinaryBefore(pos(2)))
+    }
+
+    @Test
+    fun insertingFollowsTheAppendingRules() {
+        val e = expr("12")
+        assertNull(e.insert(R.id.op_mul, pos(0))) // Nothing to multiply.
+        assertValue(12, e)
+        val f = expr("2*")
+        assertEquals(pos(2), f.insert(R.id.op_add, pos(2))) // "2*" becomes "2+".
+        assertEquals(pos(3), f.insert(KeyMaps.keyForDigVal(3), pos(2)))
+        assertValue(5, f)
+        assertNull(expr("(").insert(R.id.op_add, pos(1)))
+    }
+
+    @Test
+    fun deletesBeforeAPosition() {
+        val e = expr("123")
+        assertEquals(pos(0, 1), e.deleteBefore(pos(0, 2))) // 13
+        assertValue(13, e)
+        assertEquals(pos(0), e.deleteBefore(pos(0))) // Nothing before the start.
+        assertValue(13, e)
+        val f = expr("12+34")
+        assertEquals(pos(0, 2), f.deleteBefore(pos(2))) // The constants join up: 1234.
+        assertValue(1234, f)
+        val g = expr("12+s")
+        assertEquals(pos(2), g.deleteBefore(pos(3))) // A function goes as a whole.
+        assertTrue(g.hasBinaryBefore(pos(2)))
+    }
+
+    @Test
+    fun deletesARange() {
+        val e = expr("12+34")
+        assertEquals(pos(0, 1), e.deleteRange(pos(0, 1), pos(2, 1))) // 14
+        assertValue(14, e)
+        val f = expr("1+2")
+        assertEquals(pos(0), f.deleteRange(pos(0), pos(3)))
+        assertTrue(f.isEmpty())
+    }
+
+    @Test
+    fun removesAdditiveOperatorsBeforeAPosition() {
+        val e = expr("1+-")
+        assertEquals(pos(1), e.removeAdditiveOperatorsBefore(pos(3)))
+        assertFalse(e.hasBinaryBefore(pos(1)))
+        assertValue(1, e)
+    }
+
+    @Test
+    fun insertsExpressionsWithExplicitMultiplication() {
+        val e = expr("2")
+        assertEquals(pos(1), e.insertExpr(expr("3"), pos(0))) // 3×2, the cursor before the ×
+        assertValue(6, e)
+        val f = expr("2+")
+        assertEquals(pos(3), f.insertExpr(expr("3"), pos(2))) // 2+3
+        assertValue(5, f)
+    }
+
+    @Test
+    fun answersAboutWhatPrecedesAPosition() {
+        val e = expr("1+(2")
+        assertTrue(e.hasBinaryBefore(pos(2)))
+        assertFalse(e.hasOpenParenthesesBefore(pos(2)))
+        assertTrue(e.hasLeftParenBefore(pos(3)))
+        assertTrue(e.hasOpenParenthesesBefore(pos(4)))
+        assertTrue(e.hasConstantBefore(pos(4)))
+        assertFalse(e.hasRightParenBefore(pos(4)))
     }
 }

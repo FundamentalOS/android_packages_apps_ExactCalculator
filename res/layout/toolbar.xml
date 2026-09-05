@@ -33,13 +33,20 @@
         app:icon="@drawable/ic_more_vert"
         app:iconTint="?attr/colorOutline" />
 
+    <!-- Shows the angle mode and, like the DEG/RAD key of the advanced pad, switches it. It is
+         the size of the icon buttons and has their disc of a ripple. -->
     <TextView
         android:id="@+id/mode"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/toolbar_button_size"
         android:layout_gravity="end|center_vertical"
         android:layout_marginEnd="@dimen/toolbar_mode_margin_end"
+        android:background="@drawable/toolbar_toggle_background"
+        android:clickable="true"
+        android:focusable="true"
         android:fontFamily="@font/google_sans_flex_medium"
+        android:gravity="center"
+        android:minWidth="@dimen/toolbar_button_size"
         android:textAllCaps="true"
         android:textSize="16sp" />
 

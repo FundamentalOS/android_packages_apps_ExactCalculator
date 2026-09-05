@@ -7,6 +7,10 @@
     <!-- Milliseconds the advanced pad takes to unfold or fold away; the toggle's icon morphs
          over the same time. -->
     <integer name="advanced_pad_duration">300</integer>
+    <!-- Opening or closing the history from its toolbar button; a pull settles on its own. -->
+    <integer name="history_duration">600</integer>
+    <!-- A key's corners easing in as it is pressed, and out again as it is released. -->
+    <integer name="key_press_duration">120</integer>
     <!-- Milliseconds the toolbar toggles take to fade their icon colour and background disc. -->
     <integer name="toolbar_toggle_duration">200</integer>
     <!-- Milliseconds the overflow menu takes to grow out of, and shrink back into, its button. -->

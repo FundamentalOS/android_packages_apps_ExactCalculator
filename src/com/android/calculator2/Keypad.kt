@@ -5,12 +5,15 @@
 
 package com.android.calculator2
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -22,6 +25,7 @@ import android.view.SoundEffectConstants
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.accessibility.AccessibilityEvent
+import android.view.animation.AnimationUtils
 import android.widget.Button
 
 import androidx.annotation.IdRes
@@ -39,6 +43,7 @@ import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
 
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -71,6 +76,8 @@ class Keypad @JvmOverloads constructor(
         var contentDescription: CharSequence?,
         val longClickable: Boolean,
         val background: Drawable,
+        /** The pill inside [background], whose corners are animated; null if it is not one. */
+        val shape: GradientDrawable?,
         val labelColor: Int,
         val selectedLabelColor: Int,
         var visible: Boolean
@@ -85,6 +92,11 @@ class Keypad @JvmOverloads constructor(
         val bounds = Rect()
         var selected = false
         var pressed = false
+
+        // The corners' radius as a fraction of the full pill radius: 1 at rest, half while
+        // pressed. Kept as a fraction so that the pad resizing under an animation is harmless.
+        var cornerFraction = 1f
+        var cornerAnimator: ValueAnimator? = null
 
         init {
             this.label = label
@@ -114,6 +126,9 @@ class Keypad @JvmOverloads constructor(
     // centred, as a TextView centres its text.
     private var labelBaselineOffset = 0f
     private var iconSize = 0
+
+    private val cornerDuration = resources.getInteger(R.integer.key_press_duration).toLong()
+    private val cornerInterpolator = AnimationUtils.loadInterpolator(context, R.interpolator.standard)
 
     private var pressedKey: Key? = null
     private var longPressHandled = false
@@ -185,6 +200,7 @@ class Keypad @JvmOverloads constructor(
             val themed = if (themeRes != 0) ContextThemeWrapper(context, themeRes) else context
             val labelColor = MaterialColors.getColor(themed, com.google.android.material.R.attr.colorOnContainer, 0)
             val background = checkNotNull(AppCompatResources.getDrawable(themed, R.drawable.pad_button_background)).mutate()
+            val shape = (background as? LayerDrawable)?.getDrawable(0) as? GradientDrawable
             val icon = a.getResourceId(R.styleable.Key_android_src, 0).takeIf { it != 0 }?.let {
                 checkNotNull(AppCompatResources.getDrawable(themed, it)).mutate().apply { setTint(labelColor) }
             }
@@ -198,6 +214,7 @@ class Keypad @JvmOverloads constructor(
                 contentDescription = a.getText(R.styleable.Key_android_contentDescription),
                 longClickable = a.getBoolean(R.styleable.Key_android_longClickable, false),
                 background = background,
+                shape = shape,
                 labelColor = labelColor,
                 selectedLabelColor = MaterialColors.getColor(themed, androidx.appcompat.R.attr.colorPrimary, labelColor),
                 visible = a.getInt(R.styleable.Key_android_visibility, VISIBLE) == VISIBLE
@@ -284,6 +301,11 @@ class Keypad @JvmOverloads constructor(
                     else -> STATE_DEFAULT
                 }
             )
+            // The radius follows the current size, so a pad resizing mid-press stays a pill.
+            key.shape?.let { shape ->
+                val radius = min(key.bounds.width(), key.bounds.height()) / 2f * key.cornerFraction
+                if (shape.cornerRadius != radius) shape.cornerRadius = radius
+            }
             key.background.draw(canvas)
 
             val centerX = key.bounds.exactCenterX()
@@ -342,6 +364,7 @@ class Keypad @JvmOverloads constructor(
         pressedKey = key
         longPressHandled = false
         key.pressed = true
+        animateCorners(key, PRESSED_CORNER_FRACTION)
         key.background.setHotspot(x, y)
         // The pad does not scroll, so the press shows and is felt immediately.
         performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -353,7 +376,41 @@ class Keypad @JvmOverloads constructor(
         removeCallbacks(longPress)
         key.pressed = false
         if (pressedKey === key) pressedKey = null
+        animateCorners(key, 1f)
         invalidate()
+    }
+
+    /**
+     * Ease the key's corners to [fraction] of the full pill radius. An animation still running
+     * is taken over from where it is, so a quick tap turns back part way rather than jumping,
+     * and a press on a key still springing back just reverses it.
+     */
+    private fun animateCorners(key: Key, fraction: Float) {
+        key.cornerAnimator?.cancel()
+        key.cornerAnimator = null
+        if (key.cornerFraction == fraction) return
+        key.cornerAnimator = ValueAnimator.ofFloat(key.cornerFraction, fraction).apply {
+            duration = cornerDuration
+            interpolator = cornerInterpolator
+            addUpdateListener {
+                key.cornerFraction = it.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        // Nothing may be left pressed or moving once the view is gone.
+        removeCallbacks(longPress)
+        pressedKey = null
+        keys.forEach { key ->
+            key.cornerAnimator?.cancel()
+            key.cornerAnimator = null
+            key.cornerFraction = 1f
+            key.pressed = false
+        }
+        super.onDetachedFromWindow()
     }
 
     private fun click(key: Key) {
@@ -425,6 +482,9 @@ class Keypad @JvmOverloads constructor(
 
         /** Icon size as a fraction of the key height: about as tall as a digit would be. */
         private const val ICON_SIZE_RATIO = 0.45f
+
+        /** How far a pressed key's corners draw in. */
+        private const val PRESSED_CORNER_FRACTION = 0.5f
 
         private val STATE_DEFAULT = intArrayOf(android.R.attr.state_enabled)
         private val STATE_PRESSED = intArrayOf(android.R.attr.state_enabled, android.R.attr.state_pressed)

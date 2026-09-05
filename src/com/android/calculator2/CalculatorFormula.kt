@@ -28,10 +28,10 @@ import kotlin.math.min
 /**
  * The formula. It is an EditText, so that it has a blinking cursor and the standard text
  * selection toolbar, but one whose text is only ever changed by the calculator: the keys, not
- * the keyboard, edit the expression, and only at its end, which is where the cursor stays. So
- * there is no soft keyboard and no input connection, and key events fall through to the
- * activity, which maps them to the keys. Text can be selected and copied; pasting appends to
- * the expression, and cutting is offered for the whole formula only.
+ * the keyboard, edit the expression, at the cursor (see Calculator.beginEdit()). There is no
+ * soft keyboard and no input connection, and key events fall through to the activity, which
+ * maps them to the keys. Pasting inserts into the expression; cutting is offered for the whole
+ * formula only.
  */
 class CalculatorFormula @JvmOverloads constructor(
     context: Context,
@@ -125,14 +125,6 @@ class CalculatorFormula @JvmOverloads constructor(
 
     override fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent) = false
 
-    override fun onSelectionChanged(selStart: Int, selEnd: Int) {
-        super.onSelectionChanged(selStart, selEnd)
-        // The expression is only ever edited at its end, so that is where the cursor stays; a
-        // selected range, for copying, is left alone.
-        val end = length()
-        if (selStart == selEnd && selStart != end) setSelection(end)
-    }
-
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         if (!isLaidOut) {
             // Prevent shrinking/resizing with our variable textSize.
@@ -209,11 +201,11 @@ class CalculatorFormula @JvmOverloads constructor(
     }
 
     /**
-     * Functionally equivalent to setText(), but explicitly announce changes.
-     * If the new text is an extension of the old one, announce the addition.
+     * Functionally equivalent to setText(), but explicitly announce changes, and put the cursor
+     * at [selection]. If the new text is an extension of the old one, announce the addition.
      * Otherwise, e.g. after deletion, announce the entire new text.
      */
-    fun changeTextTo(newText: CharSequence) {
+    fun changeTextTo(newText: CharSequence, selection: Int) {
         val separator = KeyMaps.translateResult(",")[0]
         val added = newText.extensionIgnoring(text ?: "", separator)
         when {
@@ -227,7 +219,7 @@ class CalculatorFormula @JvmOverloads constructor(
             added.isNotEmpty() -> announceForAccessibility(added)
         }
         setText(newText)
-        setSelection(length())
+        setSelection(selection.coerceIn(0, length()))
     }
 
     fun stopActionModeOrContextMenu(): Boolean = actionMode?.let { it.finish(); true } ?: false
